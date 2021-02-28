@@ -1,0 +1,20 @@
+{
+  "name": "barengin-sever",
+  "version": "0.1.0",
+  "description": "Server-side code for Bareng.in BCC Internship project.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/izfaruqi/barengin-server.git"
+  },
+  "author": "izfaruqi",
+  "license": "UNLICENSED",
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/izfaruqi/barengin-server/issues"
+  },
+  "homepage": "https://github.com/izfaruqi/barengin-server#readme"
+}
