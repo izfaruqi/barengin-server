@@ -2,8 +2,10 @@
   "name": "barengin-sever",
   "version": "0.1.0",
   "description": "Server-side code for Bareng.in BCC Internship project.",
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "scripts": {
+    "start": "babel src --out-dir dist --extensions .ts && node dist/index.js",
+    "compile": "babel src --out-dir dist --extensions .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,5 +18,18 @@
   "bugs": {
     "url": "https://github.com/izfaruqi/barengin-server/issues"
   },
-  "homepage": "https://github.com/izfaruqi/barengin-server#readme"
+  "homepage": "https://github.com/izfaruqi/barengin-server#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.13.0",
+    "@babel/core": "^7.13.8",
+    "@babel/preset-env": "^7.13.8",
+    "@babel/preset-typescript": "^7.13.0",
+    "@types/node": "^14.14.31",
+    "typescript": "^4.2.2"
+  },
+  "dependencies": {
+    "@types/koa": "^2.13.0",
+    "dotenv": "^8.2.0",
+    "koa": "^2.13.1"
+  }
 }
