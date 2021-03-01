@@ -22,4 +22,7 @@ export class User {
     nullable: true
   })
   lastName!: string
+
+  @Column()
+  isAdmin!: boolean
 }
