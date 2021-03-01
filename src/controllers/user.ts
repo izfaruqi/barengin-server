@@ -54,3 +54,7 @@ export async function getAll(ctx: ParameterizedContext) {
 export async function getById(ctx: ParameterizedContext) {
   ctx.body = await getConnection().getRepository(User).find({ where: { id: parseInt(ctx.params.id) }})
 }
+
+export async function deleteById(ctx: ParameterizedContext) {
+  ctx.body = await getConnection().getRepository(User).softDelete(parseInt(ctx.params.id))
+}

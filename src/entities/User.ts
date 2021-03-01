@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn } from 'typeorm'
 
 @Entity()
 export class User {
@@ -25,4 +25,10 @@ export class User {
 
   @Column()
   isAdmin!: boolean
+
+  @DeleteDateColumn({
+    select: false,
+    nullable: true
+  })
+  deletedAt!: Date
 }
