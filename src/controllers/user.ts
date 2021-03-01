@@ -11,9 +11,8 @@ const BCRYPT_ROUNDS = 13
 
 export async function register(ctx: ParameterizedContext){
   const user: QueryDeepPartialEntity<User> = {
-    email: ctx.request.body.email,
-    password: await bcrypt.hash(ctx.request.body.password, BCRYPT_ROUNDS),
-    isAdmin: ctx.request.body.isAdmin || false
+    ...ctx.request.body,
+    password: await bcrypt.hash(ctx.request.body.password, BCRYPT_ROUNDS)
   }
   try {
     const res = await getConnection().getRepository(User).insert(user)
@@ -31,7 +30,7 @@ export async function register(ctx: ParameterizedContext){
 export async function login(ctx: ParameterizedContext){
   const userFromDB = await getConnection().getRepository(User).findOne({ select: ["id", "password", "isAdmin"], where: { email: ctx.request.body.email }})
   if(userFromDB == null){
-    ctx.throw(404, "User not found.")
+    ctx.throw(401, "Email/password incorrect.")
   }
   if(await bcrypt.compare(ctx.request.body.password, userFromDB.password)){
     ctx.body = { token: await jwt.sign({ id: userFromDB.id, isAdmin: userFromDB.isAdmin, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + (60*60*24) }, process.env.JWT_SECRET!)}
@@ -52,9 +51,9 @@ export async function getAll(ctx: ParameterizedContext) {
 }
 
 export async function getById(ctx: ParameterizedContext) {
-  ctx.body = await getConnection().getRepository(User).find({ where: { id: parseInt(ctx.params.id) }})
+  ctx.body = await getConnection().getRepository(User).find({ where: { id: ctx.params.id }})
 }
 
 export async function deleteById(ctx: ParameterizedContext) {
-  ctx.body = await getConnection().getRepository(User).softDelete(parseInt(ctx.params.id))
+  ctx.body = await getConnection().getRepository(User).softDelete(ctx.params.id)
 }

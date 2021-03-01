@@ -1,6 +1,5 @@
 import Koa from 'koa'
 import Helmet from 'koa-helmet'
-import BodyParser from 'koa-bodyparser'
 import BetterErrorHandler from 'koa-better-error-handler'
 import { AddressInfo } from 'net'
 import { router } from './routes'
@@ -9,9 +8,8 @@ export default async function initServer(){
   const app = new Koa()
 
   app.context.api = true
-  app.context.onerror = BetterErrorHandler()
+  app.context.onerror = BetterErrorHandler() // TODO: Replace with DIY error handler
   app.use(Helmet())
-  app.use(BodyParser())
   app.use(async (ctx, next) => {
     ctx.state.secret = process.env.JWT_SECRET!
     await next()
