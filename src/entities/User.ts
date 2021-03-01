@@ -24,6 +24,11 @@ export class User {
   @Column()
   isAdmin!: boolean
 
+  @Column({
+    default: 0
+  })
+  balance!: number
+
   @DeleteDateColumn({
     select: false,
     nullable: true
