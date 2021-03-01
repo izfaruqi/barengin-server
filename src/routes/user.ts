@@ -1,13 +1,41 @@
 import jwt from '../middlewares/jwt'
-import Router from 'koa-router'
+import Router, { Spec } from 'koa-joi-router'
 import { register, login, getCurrent, getAll, getById, deleteById } from '../controllers/user'
 import isAdmin from '../middlewares/isAdmin'
 
-export const router = new Router()
+export const router = Router()
 
-router.post("/register", register)
-router.post("/login", login)
-router.get("/", jwt, getCurrent)
-router.get("/all", jwt, isAdmin, getAll)
-router.get("/:id", jwt, isAdmin, getById)
-router.delete("/:id", jwt, isAdmin, deleteById)
+const routes: Spec[] = [
+  {
+    method: "POST",
+    path: "/register",
+    handler: register
+  },
+  {
+    method: "POST",
+    path: "/login",
+    handler: login
+  },
+  {
+    method: "GET",
+    path: "/",
+    handler: [jwt, getCurrent]
+  },
+  {
+    method: "GET",
+    path: "/all",
+    handler: [jwt, isAdmin, getAll]
+  },
+  {
+    method: "GET",
+    path: "/:id",
+    handler: [jwt, isAdmin, getById]
+  },
+  {
+    method: "DELETE",
+    path: "/:id",
+    handler: [jwt, isAdmin, deleteById]
+  },
+]
+
+router.route(routes)

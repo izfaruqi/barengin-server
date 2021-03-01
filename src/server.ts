@@ -16,9 +16,8 @@ export default async function initServer(){
     ctx.state.secret = process.env.JWT_SECRET!
     await next()
   })
-  
+
   app.use(router.routes())
-  app.use(router.allowedMethods())
 
   const port = typeof process.env.PORT === "string"? parseInt(process.env.PORT) : false || 4000
 
