@@ -50,3 +50,7 @@ export async function getAll(ctx: ParameterizedContext) {
   const usersFromDB = await getConnection().getRepository(User).find()
   ctx.body = usersFromDB
 }
+
+export async function getById(ctx: ParameterizedContext) {
+  ctx.body = await getConnection().getRepository(User).find({ where: { id: parseInt(ctx.params.id) }})
+}
