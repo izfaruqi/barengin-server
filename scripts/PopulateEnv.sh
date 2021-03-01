@@ -10,7 +10,7 @@ else
 fi;
 
 echo "PORT=8080" > .env;
-echo "HOSTNAME=bcc-filkom-ub-elb-392908734.ap-southeast-1.elb.amazonaws.com" >> .env;
+echo "HOSTNAME=127.0.0.1" >> .env;
 
 echo "JWT_SECRET=$(echo 'ThisIsASecretKey' | base64)" >> .env;
 
