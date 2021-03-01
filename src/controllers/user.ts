@@ -5,6 +5,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { User } from "../entities/User";
 
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 const BCRYPT_ROUNDS = 13
 
@@ -24,4 +25,22 @@ export async function register(ctx: ParameterizedContext){
         ctx.throw(500, e)
     }
   }
+}
+
+export async function login(ctx: ParameterizedContext){
+  const userFromDB = await getConnection().getRepository(User).findOne({ select: ["id", "password"], where: { email: ctx.request.body.email }})
+  if(userFromDB == null){
+    ctx.throw(404, "User not found.")
+  }
+  if(await bcrypt.compare(ctx.request.body.password, userFromDB.password)){
+    ctx.body = { token: await jwt.sign({ id: userFromDB.id, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + (60*60*24) }, process.env.JWT_SECRET!)}
+  } else {
+    ctx.throw(401, "Email/password incorrect")
+  }
+}
+
+export async function getCurrent(ctx: ParameterizedContext) {
+  const id = ctx.state.user.id
+  const userFromDb = await getConnection().getRepository(User).findOne({ where: { id: id }})
+  ctx.body = userFromDb
 }
