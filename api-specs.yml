@@ -24,7 +24,18 @@ paths:
                 properties:
                   token:
                     type: string
-        
+        '401':
+          description: Email/password incorrect.
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpeted error.
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
