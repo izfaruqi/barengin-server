@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
-import { Product } from './Group'
+//import { Product } from './Group'
 
 @Entity()
 export class User {
@@ -42,8 +42,8 @@ export class User {
   })
   balance!: number
 
-  @OneToMany(() => Product, product => product.seller)
-  products!: Product[]
+  //@OneToMany(() => Product, product => product.seller)
+  //products!: Product[]
 
   @DeleteDateColumn({
     select: false,

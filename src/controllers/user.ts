@@ -6,6 +6,7 @@ import { User } from "../entities/User";
 
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { forbidden, notFound, unauthorized } from "@hapi/boom";
 
 const BCRYPT_ROUNDS = 13
 
@@ -17,12 +18,12 @@ export async function register(ctx: ParameterizedContext){
   try {
     const res = await getConnection().getRepository(User).insert(user)
     ctx.body = { id: res.identifiers[0].id }
-  } catch (e: any){
+  } catch (e){
     switch(e.code){
       case "ER_DUP_ENTRY":
-        ctx.throw(403, e)
+        throw forbidden("Email already exists.")
       default:
-        ctx.throw(500, e)
+        throw e
     }
   }
 }
@@ -30,12 +31,12 @@ export async function register(ctx: ParameterizedContext){
 export async function login(ctx: ParameterizedContext){
   const userFromDB = await getConnection().getRepository(User).findOne({ select: ["id", "password", "isAdmin"], where: { email: ctx.request.body.email }})
   if(userFromDB == null){
-    ctx.throw(401, "Email/password incorrect.")
+    throw unauthorized("Email/password incorrect.")
   }
   if(await bcrypt.compare(ctx.request.body.password, userFromDB.password)){
     ctx.body = { token: await jwt.sign({ id: userFromDB.id, isAdmin: userFromDB.isAdmin, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + (60*60*24) }, process.env.JWT_SECRET!)}
   } else {
-    ctx.throw(401, "Email/password incorrect")
+    throw unauthorized("Email/password incorrect.")
   }
 }
 
@@ -65,13 +66,13 @@ export async function editById(ctx: ParameterizedContext){
   try {
     const res = await getConnection().getRepository(User).update(ctx.request.params.id, user)
     if(res.affected == null || res.affected == 0){ // User ID not found
-      ctx.throw(404, "User ID not found.")
+      notFound("User ID not found.")
     }
     ctx.body = { ...ctx.request.body }
-  } catch (e: any){
+  } catch (e){
     switch(e.code){
       default:
-        ctx.throw(500, e)
+        throw e
     }
   }
 }
@@ -82,5 +83,10 @@ export async function editCurrent(ctx: ParameterizedContext){
 }
 
 export async function deleteById(ctx: ParameterizedContext) {
-  ctx.body = await getConnection().getRepository(User).softDelete(ctx.params.id)
+  const res = await getConnection().getRepository(User).softDelete(ctx.params.id)
+  if(res.affected == null || res.affected == 0){ // User ID not found
+    notFound("User ID not found.")
+  } else {
+    ctx.body = { success: true }
+  }
 }

@@ -1,6 +1,5 @@
 import { Config, Joi } from "koa-joi-router";
 import { errorResponseValidator } from ".";
-import validatorErrorHandler from "../middlewares/validatorErrorHandler";
 
 const user = {
   id: Joi.number(),
@@ -27,7 +26,6 @@ export const register: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
 
@@ -43,7 +41,6 @@ export const login: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
 
@@ -54,7 +51,6 @@ export const getCurrent: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
 
@@ -65,7 +61,6 @@ export const getAll: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
 
@@ -79,7 +74,6 @@ export const getById: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
 
@@ -93,6 +87,5 @@ export const deleteById: Config = {
         body: errorResponseValidator
       }
     },
-    continueOnError: true
   }
 }
