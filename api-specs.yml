@@ -169,7 +169,7 @@ components:
           type: boolean
           default: false
           
-  securitySchemas:
+  securitySchemes:
     bearerJWT:
       type: http
       scheme: bearer
