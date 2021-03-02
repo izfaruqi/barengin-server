@@ -1,6 +1,6 @@
 import jwt from '../middlewares/jwt'
-import Router, { Spec } from 'koa-joi-router'
-import { register, login, getCurrent, getAll, getById, deleteById } from '../controllers/user'
+import Router, { Joi, Spec } from 'koa-joi-router'
+import { register, login, getCurrent, getAll, getById, deleteById, editById, editCurrent } from '../controllers/user'
 import { register as registerValidator, login as loginValidator, getCurrent as getCurrentValidator, getAll as getAllValidator, getById as getByIdValidator, deleteById as deleteByIdValidator } from '../validators/user'
 import isAdmin from '../middlewares/isAdmin'
 import validatorErrorHandler from '../middlewares/validatorErrorHandler'
@@ -37,6 +37,24 @@ const routes: Spec[] = [
     path: "/:id",
     validate: getByIdValidator.validate,
     handler: [validatorErrorHandler, jwt, isAdmin, getById]
+  },
+  {
+    method: "POST",
+    path: "/:id",
+    validate: {
+      type: "json",
+      body: Joi.object()
+    },
+    handler: [validatorErrorHandler, jwt, isAdmin, editById]
+  },
+  {
+    method: "POST",
+    path: "/",
+    validate: {
+      type: "json",
+      body: Joi.object()
+    },
+    handler: [validatorErrorHandler, jwt, editCurrent]
   },
   {
     method: "DELETE",

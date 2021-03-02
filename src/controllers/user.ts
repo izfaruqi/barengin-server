@@ -54,6 +54,33 @@ export async function getById(ctx: ParameterizedContext) {
   ctx.body = await getConnection().getRepository(User).find({ where: { id: ctx.params.id }})
 }
 
+export async function editById(ctx: ParameterizedContext){
+  const user: QueryDeepPartialEntity<User> = {
+    ...ctx.request.body
+  }
+  if(ctx.request.body.password != null){
+    user.password = await bcrypt.hash(ctx.request.body.password, BCRYPT_ROUNDS)
+    ctx.request.body.password = null
+  }
+  try {
+    const res = await getConnection().getRepository(User).update(ctx.request.params.id, user)
+    if(res.affected == null || res.affected == 0){ // User ID not found
+      ctx.throw(404, "User ID not found.")
+    }
+    ctx.body = { ...ctx.request.body }
+  } catch (e: any){
+    switch(e.code){
+      default:
+        ctx.throw(500, e)
+    }
+  }
+}
+
+export async function editCurrent(ctx: ParameterizedContext){
+  ctx.params.id = ctx.state.user.id
+  await editById(ctx)
+}
+
 export async function deleteById(ctx: ParameterizedContext) {
   ctx.body = await getConnection().getRepository(User).softDelete(ctx.params.id)
 }

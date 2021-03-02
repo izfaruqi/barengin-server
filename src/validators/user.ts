@@ -2,22 +2,27 @@ import { Config, Joi } from "koa-joi-router";
 import { errorResponseValidator } from ".";
 import validatorErrorHandler from "../middlewares/validatorErrorHandler";
 
+const user = {
+  id: Joi.number(),
+  email: Joi.string().email({ tlds: false }),
+  password: Joi.string().min(8),
+  firstName: Joi.string().trim().min(1),
+  lastName: Joi.string().trim(),
+  isAdmin: Joi.boolean().default(false)
+
+}
+
 export const register: Config = {
   validate: {
     type: 'json',
     body: {
-      email: Joi.string().required().email({ tlds: false }),
-      password: Joi.string().required().min(8),
-      firstName: Joi.string().trim().required().min(1),
-      lastName: Joi.string().trim(),
-      isAdmin: Joi.boolean().default(false)
+      email: user.email.required(),
+      password: user.password.required(),
+      firstName: user.firstName.required(),
+      lastName: user.lastName.required(),
+      isAdmin: user.isAdmin
     },
     output: {
-      200: {
-        body: {
-          id: Joi.number().required()
-        }
-      },
       '400-599': {
         body: errorResponseValidator
       }
@@ -30,8 +35,8 @@ export const login: Config = {
   validate: {
     type: 'json',
     body: {
-      email: Joi.string().required().email({ tlds: false }),
-      password: Joi.string().required().min(8),
+      email: user.email.required(),
+      password: user.password.required(),
     },
     output: {
       '400-599': {
@@ -67,7 +72,7 @@ export const getAll: Config = {
 export const getById: Config = {
   validate: {
     params: {
-      id: Joi.number().required()
+      id: user.id.required()
     },
     output: {
       '400-599': {
@@ -81,7 +86,7 @@ export const getById: Config = {
 export const deleteById: Config = {
   validate: {
     params: {
-      id: Joi.number().required()
+      id: user.id.required()
     },
     output: {
       '400-599': {
