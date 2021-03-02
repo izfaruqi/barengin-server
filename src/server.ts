@@ -1,6 +1,5 @@
 import Koa from 'koa'
 import Helmet from 'koa-helmet'
-import BetterErrorHandler from 'koa-better-error-handler'
 import { AddressInfo } from 'net'
 import { router } from './routes'
 import { errorHandler } from './middlewares/errorHandler'
