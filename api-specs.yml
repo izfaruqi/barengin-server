@@ -5,13 +5,47 @@ info:
   
 tags:
   - name: user
+  - name: admin_required
+  - name: seller_required
 paths:
+  /user/:
+    get:
+      tags:
+        - user
+      security:
+        - bearerAuth: []
+      summary: Get current user
+      description: Get current user by auth supplied.
+      responses:
+        '200': 
+          description: Returns full user profile.
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/User"
   /user/login:
     post:
       tags:
         - user
       summary: Login with email and password
       description: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+          
       responses:
         '200':
           description: Returns a JWT token for the user. Valid for 24 hours.
@@ -24,19 +58,74 @@ paths:
                 properties:
                   token:
                     type: string
+        '400':
+          description: Invalid request.
+          $ref: '#/components/responses/DefaultError'
         '401':
-          description: Email/password incorrect.
-          content:
-            application/json:
-              schema: 
-                $ref: '#/components/schemas/Error'
+          description: Invalid token/not enough privilege.
+          $ref: '#/components/responses/DefaultError'
         default:
           description: Unexpeted error.
+          $ref: '#/components/responses/DefaultError'
+  /user/register:
+    post:
+      tags:
+        - user
+      summary: Register new user with email & password.
+      description: Register new user with email & password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+              properties:
+                email:
+                  $ref: "#/components/schemas/User/properties/email"
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  $ref: "#/components/schemas/User/properties/firstName"
+                lastName:
+                  $ref: "#/components/schemas/User/properties/lastName"
+                isAdmin:
+                  $ref: "#/components/schemas/User/properties/isAdmin"
+                isSeller:
+                  $ref: "#/components/schemas/User/properties/isSeller"
+      responses:
+        '200':
+          description: Returns registered user id.
           content:
             application/json:
-              schema: 
-                $ref: '#/components/schemas/Error'
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: number
+        '400':
+          description: Invalid request.
+          $ref: '#/components/responses/DefaultError'
+        '403':
+          description: Email already exists.
+          $ref: '#/components/responses/DefaultError'
+        default:
+          description: Unexpeted error.
+          $ref: '#/components/responses/DefaultError'
+                             
 components:
+  responses:
+    DefaultError:
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
   schemas:
     Error:
       type: object
@@ -53,6 +142,33 @@ components:
           type: string
         validation:
           type: object
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - isAdmin
+        - isSeller
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+        isAdmin:
+          type: boolean
+          default: false
+        isSeller:
+          type: boolean
+          default: false
+          
   securitySchemas:
     bearerJWT:
       type: http
