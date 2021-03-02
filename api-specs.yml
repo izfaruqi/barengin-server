@@ -2,3 +2,48 @@ openapi: 3.0.0
 info:
   title: Bareng.in Server API
   version: 0.1.0
+  
+tags:
+  - name: user
+paths:
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: Login with email and password
+      description: Login with email and password
+      responses:
+        '200':
+          description: Returns a JWT token for the user. Valid for 24 hours.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+        
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - statusCode
+        - error
+        - message
+      properties:
+        statusCode:
+          type: number
+        error:
+          type: string
+        message:
+          type: string
+        validation:
+          type: object
+  securitySchemas:
+    bearerJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
