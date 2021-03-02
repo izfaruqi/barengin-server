@@ -2,7 +2,6 @@ openapi: 3.0.0
 info:
   title: Bareng.in Server API
   version: 0.1.0
-  
 tags:
   - name: user
   - name: admin_required
@@ -13,9 +12,9 @@ paths:
       tags:
         - user
       security:
-        - bearerAuth: []
+        - bearerJWT: []
       summary: Get current user
-      description: Get current user by auth supplied.
+      description: Get current user by auth token supplied.
       responses:
         '200': 
           description: Returns full user profile.
@@ -23,6 +22,190 @@ paths:
             application/json:
               schema: 
                 $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post: 
+      tags:
+        - user
+      security:
+        - bearerJWT: []
+      summary: Edit current user profile
+      description: Edit current user profile by auth token supplied.
+      responses: 
+        '200':
+          $ref: "#/paths/~1user~1{id}/post/responses/200"
+        '400':
+          $ref: "#/paths/~1user~1{id}/post/responses/400"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+        
+  /user/all:
+    get:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Get list of all users
+      description: Get the full profiles of all users
+      responses:
+        '200':
+          description: Returns the full profiles of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+  /user/{id}:
+    get:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Get user full profile by id
+      description: Get user full profile by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: Returns the full profile of the user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    delete:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Delete user by id
+      description: Delete user by id. JWT token of the deleted user may still be active until expired.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200': 
+          description: Success message.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Edit user profile by id
+      description: Edit user profile by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: Returns the edited fields.
+          content:
+            application/json:
+             schema:
+               type: object
+               properties:
+                 email:
+                   type: string
+                   format: email
+                 firstName:
+                   type: string
+                   minLength: 1
+                 lastName:
+                   type: string
+                 isAdmin:
+                   type: boolean
+                   default: false
+                 isSeller:
+                   type: boolean
+                   default: false
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+          
   /user/login:
     post:
       tags:
@@ -60,13 +243,24 @@ paths:
                     type: string
         '400':
           description: Invalid request.
-          $ref: '#/components/responses/DefaultError'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         '401':
           description: Invalid token/not enough privilege.
-          $ref: '#/components/responses/DefaultError'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         default:
-          description: Unexpeted error.
-          $ref: '#/components/responses/DefaultError'
+          $ref: "#/components/responses/UnexpectedError"
   /user/register:
     post:
       tags:
@@ -111,17 +305,23 @@ paths:
                     type: number
         '400':
           description: Invalid request.
-          $ref: '#/components/responses/DefaultError'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         '403':
           description: Email already exists.
-          $ref: '#/components/responses/DefaultError'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         default:
-          description: Unexpeted error.
-          $ref: '#/components/responses/DefaultError'
+          $ref: "#/components/responses/UnexpectedError"
                              
 components:
   responses:
-    DefaultError:
+    UnexpectedError:
+      description: Unexpected error.
       content:
         application/json:
           schema: 
