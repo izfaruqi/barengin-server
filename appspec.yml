@@ -1,0 +1,13 @@
+version: 0.0
+os: linux
+files:
+  - source: .
+    destination: /var/app/current
+hooks:
+  BeforeInstall:
+    - location: ./scripts/RemoveApp.sh
+  AfterInstall:
+    - location: ./scripts/PopulateEnv.sh
+    - location: ./scripts/InstallApp.sh
+  ApplicationStart:
+    - location: ./scripts/StartApp.sh
