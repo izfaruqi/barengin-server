@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
+//import { Product } from './Group'
 
 @Entity()
 export class User {
@@ -22,7 +23,27 @@ export class User {
   lastName!: string
 
   @Column()
+  birthDate!: Date
+
+  @Column()
+  address!: string // Will be stored as json
+
+  @Column()
+  phone!: number
+
+  @Column()
   isAdmin!: boolean
+
+  @Column()
+  isSeller!: boolean
+
+  @Column({
+    default: 0
+  })
+  balance!: number
+
+  //@OneToMany(() => Product, product => product.seller)
+  //products!: Product[]
 
   @DeleteDateColumn({
     select: false,

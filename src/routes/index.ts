@@ -4,5 +4,5 @@ import { router as user } from './user'
 
 export const router = new Router()
 
-router.use('/', root.routes())
+router.use('', root.middleware())
 router.use('/user', user.middleware())

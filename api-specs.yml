@@ -1,0 +1,376 @@
+openapi: 3.0.0
+info:
+  title: Bareng.in Server API
+  version: 0.1.0
+tags:
+  - name: user
+  - name: admin_required
+  - name: seller_required
+paths:
+  /user/:
+    get:
+      tags:
+        - user
+      security:
+        - bearerJWT: []
+      summary: Get current user
+      description: Get current user by auth token supplied.
+      responses:
+        '200': 
+          description: Returns full user profile.
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/User"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post: 
+      tags:
+        - user
+      security:
+        - bearerJWT: []
+      summary: Edit current user profile
+      description: Edit current user profile by auth token supplied.
+      responses: 
+        '200':
+          $ref: "#/paths/~1user~1{id}/post/responses/200"
+        '400':
+          $ref: "#/paths/~1user~1{id}/post/responses/400"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+        
+  /user/all:
+    get:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Get list of all users
+      description: Get the full profiles of all users
+      responses:
+        '200':
+          description: Returns the full profiles of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+  /user/{id}:
+    get:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Get user full profile by id
+      description: Get user full profile by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: Returns the full profile of the user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    delete:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Delete user by id
+      description: Delete user by id. JWT token of the deleted user may still be active until expired.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200': 
+          description: Success message.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - user
+        - admin_required
+      security:
+        - bearerJWT: []
+      summary: Edit user profile by id
+      description: Edit user profile by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: User ID
+      responses:
+        '200':
+          description: Returns the edited fields.
+          content:
+            application/json:
+             schema:
+               type: object
+               properties:
+                 email:
+                   type: string
+                   format: email
+                 firstName:
+                   type: string
+                   minLength: 1
+                 lastName:
+                   type: string
+                 isAdmin:
+                   type: boolean
+                   default: false
+                 isSeller:
+                   type: boolean
+                   default: false
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+          
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: Login with email and password
+      description: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+          
+      responses:
+        '200':
+          description: Returns a JWT token for the user. Valid for 24 hours.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Invalid token/not enough privilege.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /user/register:
+    post:
+      tags:
+        - user
+      summary: Register new user with email & password.
+      description: Register new user with email & password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+              properties:
+                email:
+                  $ref: "#/components/schemas/User/properties/email"
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  $ref: "#/components/schemas/User/properties/firstName"
+                lastName:
+                  $ref: "#/components/schemas/User/properties/lastName"
+                isAdmin:
+                  $ref: "#/components/schemas/User/properties/isAdmin"
+                isSeller:
+                  $ref: "#/components/schemas/User/properties/isSeller"
+      responses:
+        '200':
+          description: Returns registered user id.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: number
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '403':
+          description: Email already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+                             
+components:
+  responses:
+    UnexpectedError:
+      description: Unexpected error.
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required:
+        - statusCode
+        - error
+        - message
+      properties:
+        statusCode:
+          type: number
+        error:
+          type: string
+        message:
+          type: string
+        validation:
+          type: object
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - isAdmin
+        - isSeller
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+        isAdmin:
+          type: boolean
+          default: false
+        isSeller:
+          type: boolean
+          default: false
+          
+  securitySchemes:
+    bearerJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,5 +1,4 @@
 import { createConnection } from 'typeorm'
-import './entities/User'
 import { User } from './entities/User'
 
 export default async function initDB() {
