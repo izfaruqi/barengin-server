@@ -10,14 +10,16 @@ export class Product {
   @Column()
   name!: string
 
-  @Column()
-  price!: string
-
   @ManyToOne(() => ProductCategory, productCategory => productCategory.products)
   category!: ProductCategory
 
   @ManyToOne(() => User, user => user.products)
   seller!: User
+
+  @Column({
+    type: "blob"
+  })
+  image!: Uint8Array;
 
   @DeleteDateColumn({
     select: false,

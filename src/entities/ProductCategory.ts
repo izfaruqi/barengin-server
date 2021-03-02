@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
-import { Product } from './Product'
+import { Product } from './Group'
 
 @Entity()
 export class ProductCategory {
@@ -9,13 +9,11 @@ export class ProductCategory {
   @Column()
   name!: string
 
+  @Column()
+  price!: string
+
   @OneToMany(() => Product, product => product.category)
   products!: Product[]
-
-  @Column({
-    type: "blob"
-  })
-  image!: Uint8Array;
 
   @DeleteDateColumn({
     select: false,
