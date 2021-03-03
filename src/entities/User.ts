@@ -6,7 +6,10 @@ export class User {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @Column()
+  @Column({
+    unique: true,
+    select: false
+  })
   @Index()
   firebaseUid!: string
 
@@ -14,11 +17,6 @@ export class User {
     unique: true
   })
   email!: string
-
-  @Column({
-    select: false
-  })
-  password!: string
 
   @Column()
   firstName!: string
