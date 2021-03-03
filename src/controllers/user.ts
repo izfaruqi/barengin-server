@@ -4,13 +4,10 @@ import { getConnection } from 'typeorm'
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { User } from "../entities/User";
 
-import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { forbidden, notFound, unauthorized } from "@hapi/boom";
 import firebase from "firebase";
-import admin, { firestore } from 'firebase-admin'
-
-const BCRYPT_ROUNDS = 13
+import admin from 'firebase-admin'
 
 export async function register(ctx: ParameterizedContext){
   const user: QueryDeepPartialEntity<User> = {
