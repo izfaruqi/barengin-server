@@ -21,22 +21,34 @@ export class User {
   @Column()
   firstName!: string
 
-  @Column()
+  @Column({
+    default: ""
+  })
   lastName!: string
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   birthDate!: Date
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   address!: string // Will be stored as json
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   phone!: number
 
-  @Column()
+  @Column({
+    default: false
+  })
   isAdmin!: boolean
 
-  @Column()
+  @Column({
+    default: false
+  })
   isSeller!: boolean
 
   @Column({
