@@ -44,6 +44,21 @@ export const login: Config = {
   }
 }
 
+export const tokenSwap: Config = {
+  validate: {
+    type: 'json',
+    body: {
+      firebaseIdToken: Joi.string().required(),
+      profile: Joi.object().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getCurrent: Config = {
   validate: {
     output: {
