@@ -66,7 +66,7 @@ export async function editById(ctx: ParameterizedContext){
   try {
     const res = await getConnection().getRepository(User).update(ctx.request.params.id, user)
     if(res.affected == null || res.affected == 0){ // User ID not found
-      notFound("User ID not found.")
+      throw notFound("User ID not found.")
     }
     ctx.body = { ...ctx.request.body }
   } catch (e){
@@ -85,7 +85,7 @@ export async function editCurrent(ctx: ParameterizedContext){
 export async function deleteById(ctx: ParameterizedContext) {
   const res = await getConnection().getRepository(User).softDelete(ctx.params.id)
   if(res.affected == null || res.affected == 0){ // User ID not found
-    notFound("User ID not found.")
+    throw notFound("User ID not found.")
   } else {
     ctx.body = { success: true }
   }

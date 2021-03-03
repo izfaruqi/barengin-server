@@ -1,4 +1,4 @@
-import { badImplementation, badRequest, isBoom } from "@hapi/boom";
+import { badImplementation, badRequest, isBoom, unauthorized } from "@hapi/boom";
 import { Next, ParameterizedContext } from "koa";
 
 export async function errorHandler(ctx: ParameterizedContext, next: Next){
@@ -8,6 +8,10 @@ export async function errorHandler(ctx: ParameterizedContext, next: Next){
     if(isBoom(err)){
       ctx.status = err.output.statusCode
       ctx.body = err.output.payload
+    } else if(err.message == "Authentication Error") { // Error handler for malformed JWT. 
+      const authErr = unauthorized("Malformed JWT.")
+      ctx.status = authErr.output.statusCode
+      ctx.body = authErr.output.payload
     } else if(err.name == "ValidationError") { // Error handler for Joi validation errors.
       const headerErr = ctx.invalid.header?.details.map((err: { message: any; }) => err.message)
       const queryErr = ctx.invalid.query?.details.map((err: { message: any; }) => err.message)
