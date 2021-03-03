@@ -19,3 +19,5 @@ echo "DB_PORT=3306" >> .env;
 echo "DB_NAME=intern_12" >> .env;
 echo "DB_USER=intern_12" >> .env;
 echo "DB_PASS=" >> .env;
+
+echo "GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json" >> .env;
