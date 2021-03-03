@@ -1,10 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, Index } from 'typeorm'
 //import { Product } from './Group'
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id!: number
+
+  @Column()
+  @Index()
+  firebaseUid!: string
 
   @Column({
     unique: true
