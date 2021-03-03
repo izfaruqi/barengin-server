@@ -24,7 +24,7 @@ export async function register(ctx: ParameterizedContext){
       case "auth/email-already-in-use":
         throw forbidden("Email already exists.")
       default:
-        throw unauthorized(e)
+        throw e
     }
   }
 }

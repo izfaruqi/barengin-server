@@ -21,7 +21,9 @@ export class User {
   @Column()
   firstName!: string
 
-  @Column()
+  @Column({
+    default: ""
+  })
   lastName!: string
 
   @Column({
@@ -29,10 +31,14 @@ export class User {
   })
   birthDate!: Date
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   address!: string // Will be stored as json
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   phone!: number
 
   @Column()
