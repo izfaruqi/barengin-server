@@ -24,7 +24,9 @@ export class User {
   @Column()
   lastName!: string
 
-  @Column()
+  @Column({
+    nullable: true
+  })
   birthDate!: Date
 
   @Column()
