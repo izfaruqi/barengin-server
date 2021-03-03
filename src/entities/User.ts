@@ -41,10 +41,14 @@ export class User {
   })
   phone!: number
 
-  @Column()
+  @Column({
+    default: false
+  })
   isAdmin!: boolean
 
-  @Column()
+  @Column({
+    default: false
+  })
   isSeller!: boolean
 
   @Column({
