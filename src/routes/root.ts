@@ -15,5 +15,6 @@ router.get("/UNSAFEclearAllData", async ctx => {
       const repository = await getConnection().getRepository(entity.name);
       await repository.clear();
   }
-  ctx.body = { success: true }
+
+  ctx.body = { success: true, message: "Dont forget to delete all accounts from Firebase Auth!" }
 })
