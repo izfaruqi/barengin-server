@@ -1,25 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne } from 'typeorm'
-import { ProductCategory } from './ProductCategory'
-import { User } from './User'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, OneToMany } from 'typeorm'
 
 @Entity()
-export class Product {
+export class Group {
   @PrimaryGeneratedColumn()
   id!: number
 
   @Column()
   name!: string
 
-  @ManyToOne(() => ProductCategory, productCategory => productCategory.products)
-  category!: ProductCategory
-
-  @ManyToOne(() => User, user => user.products)
-  seller!: User
-
-  @Column({
-    type: "blob"
-  })
-  image!: Uint8Array;
 
   @DeleteDateColumn({
     select: false,

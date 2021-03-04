@@ -1,8 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
-import { Product } from './Group'
 
 @Entity()
-export class ProductCategory {
+export class GroupCategory {
   @PrimaryGeneratedColumn()
   id!: number
 
@@ -10,10 +9,12 @@ export class ProductCategory {
   name!: string
 
   @Column()
-  price!: string
-
-  @OneToMany(() => Product, product => product.category)
-  products!: Product[]
+  price!: number
+  
+  @Column({
+    default: ""
+  })
+  description!: string
 
   @DeleteDateColumn({
     select: false,
