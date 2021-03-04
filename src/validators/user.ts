@@ -7,8 +7,8 @@ const user = {
   password: Joi.string().min(8),
   firstName: Joi.string().trim().min(1),
   lastName: Joi.string().trim(),
-  isAdmin: Joi.boolean(),
-  isSeller: Joi.boolean(),
+  isAdmin: Joi.boolean().default(false),
+  isSeller: Joi.boolean().default(false),
   emailVerified: Joi.boolean(),
   birthDate: Joi.number(),
   phone: Joi.number(),
@@ -24,7 +24,8 @@ export const register: Config = {
       password: user.password.required(),
       firstName: user.firstName.required(),
       lastName: user.lastName.required(),
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      isSeller: user.isSeller
     },
     output: {
       '400-599': {
