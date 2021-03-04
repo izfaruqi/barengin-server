@@ -32,3 +32,11 @@ export async function editById(ctx: ParameterizedContext) {
   }
   ctx.body = ctx.request.body
 }
+
+export async function deleteById(ctx: ParameterizedContext) {
+  const res = await getConnection().getRepository(GroupCategory).softDelete(ctx.request.params.id)
+  if(res.raw.affectedRows == 0){
+    throw notFound("Group category not found.")
+  }
+  ctx.body = { success: true }
+}

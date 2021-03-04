@@ -65,3 +65,16 @@ export const editById: Config = {
     },
   }
 }
+
+export const deleteById: Config = {
+  validate: {
+    params: {
+      id: groupCategory.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
