@@ -32,11 +32,25 @@ paths:
         - bearerJWT: []
       summary: Edit current user profile
       description: Edit current user profile by auth token supplied.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserEdit"
       responses: 
         '200':
-          $ref: "#/paths/~1user~1{id}/post/responses/200"
+          description: Returns the edited fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserEdit"
         '400':
-          $ref: "#/paths/~1user~1{id}/post/responses/400"
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         default:
           $ref: "#/components/responses/UnexpectedError"
         
@@ -165,28 +179,19 @@ paths:
             type: number
           required: true
           description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserEdit"
       responses:
         '200':
           description: Returns the edited fields.
           content:
             application/json:
-             schema:
-               type: object
-               properties:
-                 email:
-                   type: string
-                   format: email
-                 firstName:
-                   type: string
-                   minLength: 1
-                 lastName:
-                   type: string
-                 isAdmin:
-                   type: boolean
-                   default: false
-                 isSeller:
-                   type: boolean
-                   default: false
+              schema:
+                $ref: "#/components/schemas/UserEdit"
         '400':
           description: Invalid request.
           content:
@@ -413,6 +418,7 @@ components:
         - lastName
         - isAdmin
         - isSeller
+        - balance
       properties:
         id:
           type: number
@@ -430,6 +436,37 @@ components:
         isSeller:
           type: boolean
           default: false
+        balance:
+          type: number
+          default: 0
+        address:
+          type: string
+        birthDate:
+          type: number
+        phone:
+          type: number
+        emailVerified:
+          type: boolean
+    UserEdit:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+        isAdmin:
+          type: boolean
+          default: false
+        isSeller:
+          type: boolean
+          default: false
+        address:
+          type: string
+        birthDate:
+          type: number
+        phone:
+          type: number
           
   securitySchemes:
     bearerJWT:
