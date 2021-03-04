@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Joi, Spec } from 'koa-joi-router'
 import { register, login, getCurrent, getAll, getById, deleteById, editById, editCurrent, tokenSwap } from '../controllers/user'
-import { register as registerValidator, login as loginValidator, tokenSwap as tokenSwapValidator, getCurrent as getCurrentValidator, getAll as getAllValidator, getById as getByIdValidator, deleteById as deleteByIdValidator } from '../validators/user'
+import { register as registerValidator, login as loginValidator, tokenSwap as tokenSwapValidator, getCurrent as getCurrentValidator, getAll as getAllValidator, getById as getByIdValidator, deleteById as deleteByIdValidator, editById as editByIdValidator, editCurrent as editCurrentValidator } from '../validators/user'
 import isAdmin from '../middlewares/isAdmin'
 
 export const router = Router()
@@ -46,19 +46,13 @@ const routes: Spec[] = [
   {
     method: "POST",
     path: "/:id",
-    validate: {
-      type: "json",
-      body: Joi.object()
-    },
+    validate: editByIdValidator.validate,
     handler: [jwt, isAdmin, editById]
   },
   {
     method: "POST",
     path: "/",
-    validate: {
-      type: "json",
-      body: Joi.object()
-    },
+    validate: editCurrentValidator.validate,
     handler: [jwt, editCurrent]
   },
   {

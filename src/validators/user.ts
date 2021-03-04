@@ -7,8 +7,13 @@ const user = {
   password: Joi.string().min(8),
   firstName: Joi.string().trim().min(1),
   lastName: Joi.string().trim(),
-  isAdmin: Joi.boolean().default(false)
-
+  isAdmin: Joi.boolean(),
+  isSeller: Joi.boolean(),
+  emailVerified: Joi.boolean(),
+  birthDate: Joi.number(),
+  phone: Joi.number(),
+  address: Joi.string(),
+  balance: Joi.number()  
 }
 
 export const register: Config = {
@@ -83,6 +88,45 @@ export const getById: Config = {
   validate: {
     params: {
       id: user.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const editCurrent: Config = {
+  validate: {
+    type: "json",
+    body: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      birthDate: user.birthDate,
+      address: user.address,
+      phone: user.phone,
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const editById: Config = {
+  validate: {
+    type: "json",
+    params: {
+      id: user.id.required()
+    },
+    body: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      birthDate: user.birthDate,
+      address: user.address,
+      phone: user.phone,
     },
     output: {
       '400-599': {
