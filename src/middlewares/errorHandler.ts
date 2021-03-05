@@ -5,6 +5,7 @@ export async function errorHandler(ctx: ParameterizedContext, next: Next){
   try {
     await next()
   } catch (err) {
+    console.log(err)
     if(isBoom(err)){
       ctx.status = err.output.statusCode
       ctx.body = err.output.payload

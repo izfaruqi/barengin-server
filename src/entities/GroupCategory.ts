@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, JoinTable } from 'typeorm'
+import { Group } from './Group'
 
 @Entity()
 export class GroupCategory {
@@ -15,6 +16,9 @@ export class GroupCategory {
     default: ""
   })
   description!: string
+
+  @OneToMany(() => Group, group => group.groupCategory, { nullable: true })
+  groups!: Group[]
 
   @DeleteDateColumn({
     select: false,
