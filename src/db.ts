@@ -1,4 +1,6 @@
 import { createConnection } from 'typeorm'
+import { Group } from './entities/Group'
+import { GroupCategory } from './entities/GroupCategory'
 import { User } from './entities/User'
 
 export default async function initDB() {
@@ -12,7 +14,9 @@ export default async function initDB() {
     synchronize: true,
     logging: false,
     "entities": [
-      User
+      User,
+      GroupCategory,
+      Group
     ]
   })
 }
