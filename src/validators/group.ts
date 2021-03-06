@@ -39,6 +39,19 @@ export const getAll: Config = {
   }
 }
 
+export const getAllByCategory: Config = {
+  validate: {
+    params: {
+      categoryId: group.categoryId.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getById: Config = {
   validate: {
     params: {

@@ -67,6 +67,12 @@ export async function getAllAdmin(ctx: ParameterizedContext) {
   ctx.body = res
 }
 
+export async function getAllByCategory(ctx: ParameterizedContext) {
+  const res = await safeGetGroupQuery().where("groupCategory.id = :categoryId", { categoryId: ctx.request.params.categoryId })
+    .getMany()
+  ctx.body = res
+}
+
 async function getByIdFull(ctx: ParameterizedContext){
   const group = await safeGetGroupQuery(true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
   if(!group){
