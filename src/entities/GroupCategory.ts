@@ -11,6 +11,9 @@ export class GroupCategory {
 
   @Column()
   price!: number
+
+  @Column()
+  packagePrice!: number
   
   @Column({
     default: ""
