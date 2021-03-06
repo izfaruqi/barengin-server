@@ -6,7 +6,13 @@ import { Group } from "../entities/Group";
 
 export async function insert(ctx: ParameterizedContext) {
   try {
-    const res = await getConnection().getRepository(Group).insert({ name: ctx.request.body.name, groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } })
+    const res = await getConnection().getRepository(Group).insert({ 
+      name: ctx.request.body.name,
+      slotsAvailable: ctx.request.body.slotsAvailable,
+      rules: ctx.request.body.rules,
+      credentials: ctx.request.body.credentials,
+      groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } 
+    })
     ctx.body = { id: res.identifiers[0].id }
   } catch (err) {
     if(err.code?.startsWith("ER_NO_REFERENCED_ROW")){ // Foreign key constraint fail (invalid user/group category)
@@ -22,6 +28,8 @@ export async function editById(ctx: ParameterizedContext) {
     const partialGroup: QueryDeepPartialEntity<Group> = {}
     ctx.request.body.name != null && (partialGroup.name = ctx.request.body.name)
     ctx.request.body.slotsAvailable != null && (partialGroup.slotsAvailable = ctx.request.body.slotsAvailable)
+    ctx.request.body.rules != null && (partialGroup.rules = ctx.request.body.rules)
+    ctx.request.body.credentials != null && (partialGroup.credentials = ctx.request.body.credentials)
 
     if(ctx.request.body.categoryId != null){
       partialGroup.groupCategory = { id: ctx.request.body.categoryId }
