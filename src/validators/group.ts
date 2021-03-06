@@ -57,6 +57,7 @@ export const editById: Config = {
     },
     body: {
       name: group.name,
+      categoryId: group.categoryId
     },
     output: {
       '400-599': {
