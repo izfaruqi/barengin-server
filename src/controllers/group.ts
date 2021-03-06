@@ -66,3 +66,11 @@ export async function getById(ctx: ParameterizedContext){
     await getByIdNonFull(ctx)
   }
 }
+
+export async function deleteById(ctx: ParameterizedContext){
+  const res = await getConnection().getRepository(Group).softDelete(ctx.request.params.id)
+  if(res.raw.affectedRows == 0){
+    throw notFound("Group not found.")
+  }
+  ctx.body = { success: true }
+}
