@@ -16,6 +16,14 @@ export class Group {
   @Column()
   slotsTaken!: number
 
+  @Column()
+  rules!: string
+
+  @Column({
+    select: false
+  })
+  credentials!: string
+
   @ManyToOne(() => GroupCategory, groupCategory => groupCategory.groups, { nullable: false })
   groupCategory!: GroupCategory
 
