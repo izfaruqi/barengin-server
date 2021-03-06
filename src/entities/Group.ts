@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, OneToMany, ManyToMany, JoinTable, JoinColumn } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable } from 'typeorm'
 import { GroupCategory } from './GroupCategory'
 import { User } from './User'
 
@@ -9,6 +9,12 @@ export class Group {
 
   @Column()
   name!: string
+
+  @Column()
+  slotsAvailable!: number
+
+  @Column()
+  slotsTaken!: number
 
   @ManyToOne(() => GroupCategory, groupCategory => groupCategory.groups, { nullable: false })
   groupCategory!: GroupCategory

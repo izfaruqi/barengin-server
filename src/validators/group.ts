@@ -6,6 +6,7 @@ const group = {
   categoryId: Joi.number(),
   ownerId: Joi.number(),
   name: Joi.string().trim().min(1),
+  slotsAvailable: Joi.number()
 }
 
 export const insert: Config = {
@@ -13,7 +14,8 @@ export const insert: Config = {
     type: 'json',
     body: {
       name: group.name.required(),
-      categoryId: group.categoryId.required()
+      categoryId: group.categoryId.required(),
+      slotsAvailable: group.slotsAvailable.required()
     },
     output: {
       '400-599': {
@@ -57,7 +59,8 @@ export const editById: Config = {
     },
     body: {
       name: group.name,
-      categoryId: group.categoryId
+      categoryId: group.categoryId,
+      slotsAvailable: group.slotsAvailable
     },
     output: {
       '400-599': {

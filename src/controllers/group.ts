@@ -21,6 +21,7 @@ export async function editById(ctx: ParameterizedContext) {
   try {
     const partialGroup: QueryDeepPartialEntity<Group> = {}
     ctx.request.body.name != null && (partialGroup.name = ctx.request.body.name)
+    ctx.request.body.slotsAvailable != null && (partialGroup.slotsAvailable = ctx.request.body.slotsAvailable)
 
     if(ctx.request.body.categoryId != null){
       partialGroup.groupCategory = { id: ctx.request.body.categoryId }
