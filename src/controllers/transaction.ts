@@ -63,7 +63,7 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function cancelById(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { cancel: true })
+  const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { cancelled: true })
   if(res == null){
     throw notFound("Transaction not found.")
   }

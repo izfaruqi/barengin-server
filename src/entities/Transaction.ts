@@ -13,14 +13,20 @@ export class Transaction {
   @ManyToOne(() => User)
   buyer!: User
 
-  @Column()
+  @Column({
+    default: 0
+  })
   totalPrice!: number
 
-  @Column()
+  @Column({
+    default: false
+  })
   paid!: boolean
 
-  @Column()
-  cancel!: boolean
+  @Column({
+    default: false
+  })
+  cancelled!: boolean
 
   @CreateDateColumn()
   createdAt!: Date

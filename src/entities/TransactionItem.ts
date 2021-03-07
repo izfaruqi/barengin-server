@@ -23,13 +23,19 @@ export class TransactionItem {
 
   // The three columns below are included to act as "snapshots"
   // in case that the original price, name, and category name changed.
-  @Column()
+  @Column({
+    default: 0
+  })
   price!: number
 
-  @Column()
+  @Column({
+    default: ""
+  })
   name!: string
 
-  @Column()
+  @Column({
+    default: ""
+  })
   categoryName!: string
 
   @CreateDateColumn({ select: false })
