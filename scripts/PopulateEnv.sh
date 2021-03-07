@@ -21,3 +21,4 @@ echo "DB_USER=intern_12" >> .env;
 echo "DB_PASS=" >> .env;
 
 echo "GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json" >> .env;
+echo "GOOGLE_FIREBASE_CONFIG=./firebaseConfig.json" >> .env;
