@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./Group";
 import { GroupCategory } from "./GroupCategory";
 import { Transaction } from "./Transaction";
@@ -31,4 +31,7 @@ export class TransactionItem {
 
   @Column()
   categoryName!: string
+
+  @CreateDateColumn({ select: false })
+  createdAt!: Date
 }

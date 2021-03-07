@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TransactionItem } from "./TransactionItem";
 import { User } from "./User";
 
@@ -21,4 +21,7 @@ export class Transaction {
 
   @Column()
   cancel!: boolean
+
+  @CreateDateColumn()
+  createdAt!: Date
 }
