@@ -31,6 +31,10 @@ export const insert: Config = {
 
 export const getAll: Config = {
   validate: {
+    params: {
+      limit: Joi.number().default(40),
+      offset: Joi.number().default(0)
+    },
     output: {
       '400-599': {
         body: errorResponseValidator
@@ -42,7 +46,9 @@ export const getAll: Config = {
 export const getAllByCategory: Config = {
   validate: {
     params: {
-      categoryId: group.categoryId.required()
+      categoryId: group.categoryId.required(),
+      limit: Joi.number().default(40),
+      offset: Joi.number().default(0)
     },
     output: {
       '400-599': {
