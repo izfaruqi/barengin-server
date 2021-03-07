@@ -8,7 +8,7 @@ export class TransactionItem {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @ManyToOne(() => Transaction)
+  @ManyToOne(() => Transaction, transaction => transaction.items)
   transaction!: Transaction
 
   @ManyToOne(() => User)
