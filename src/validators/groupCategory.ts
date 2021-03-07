@@ -5,7 +5,8 @@ const groupCategory = {
   id: Joi.number(),
   name: Joi.string().trim().min(1),
   description: Joi.string(),
-  price: Joi.number()
+  price: Joi.number(),
+  packagePrice: Joi.number()
 }
 
 export const insert: Config = {
@@ -14,7 +15,8 @@ export const insert: Config = {
     body: {
       name: groupCategory.name.required(),
       description: groupCategory.description,
-      price: groupCategory.price.required()
+      price: groupCategory.price.required(),
+      packagePrice: groupCategory.packagePrice.required()
     },
     output: {
       '400-599': {
@@ -56,7 +58,8 @@ export const editById: Config = {
     body: {
       name: groupCategory.name,
       description: groupCategory.description,
-      price: groupCategory.price
+      price: groupCategory.price,
+      packagePrice: groupCategory.packagePrice
     },
     output: {
       '400-599': {

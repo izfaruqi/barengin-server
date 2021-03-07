@@ -63,6 +63,14 @@ function safeGetGroupQuery(includeMembers: boolean = false): SelectQueryBuilder<
 
 export async function getAllAdmin(ctx: ParameterizedContext) {
   const res = await safeGetGroupQuery(true)
+    .take(parseInt(ctx.request.params.limit!)).skip(parseInt(ctx.request.params.offset!))
+    .getMany()
+  ctx.body = res
+}
+
+export async function getAllByCategory(ctx: ParameterizedContext) {
+  const res = await safeGetGroupQuery().where("groupCategory.id = :categoryId", { categoryId: ctx.request.params.categoryId })
+    .take(parseInt(ctx.request.params.limit!)).skip(parseInt(ctx.request.params.offset!))
     .getMany()
   ctx.body = res
 }
