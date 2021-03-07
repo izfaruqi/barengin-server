@@ -31,8 +31,18 @@ export async function insert(ctx: ParameterizedContext) {
   ctx.body = { id: res.id }
 }
 
+// Admin only
 export async function getById(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(Transaction).findOne({ where: { id: ctx.request.params.id }, relations: ["items"]})
+  const res = await getConnection().getRepository(Transaction).findOne({ where: { id: ctx.request.params.id }, relations: ["items", "buyer"]})
+  if(res == null){
+    throw notFound("Transaction not found.")
+  }
+  ctx.body = res
+}
+
+// Get all transactions for the logged in user
+export async function getCurrent(ctx: ParameterizedContext){
+  const res = await getConnection().getRepository(Transaction).find({ where: { buyer: { id: ctx.state.user.id } }, relations: ["items"]})
   if(res == null){
     throw notFound("Transaction not found.")
   }

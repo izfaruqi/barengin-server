@@ -31,6 +31,16 @@ export const insert: Config = {
   }
 }
 
+export const getCurrent: Config = {
+  validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getById: Config = {
   validate: {
     params: {
