@@ -38,3 +38,11 @@ export async function getById(ctx: ParameterizedContext){
   }
   ctx.body = res
 }
+
+export async function cancelById(ctx: ParameterizedContext){
+  const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { cancel: true })
+  if(res == null){
+    throw notFound("Transaction not found.")
+  }
+  ctx.body = { success: true }
+}

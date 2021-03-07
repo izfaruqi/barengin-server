@@ -18,4 +18,7 @@ export class Transaction {
 
   @Column()
   paid!: boolean
+
+  @Column()
+  cancel!: boolean
 }

@@ -43,3 +43,16 @@ export const getById: Config = {
     },
   }
 }
+
+export const cancelById: Config = {
+  validate: {
+    params: {
+      id: transaction.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
