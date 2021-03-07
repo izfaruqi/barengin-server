@@ -6,6 +6,13 @@ import { TransactionItem } from "../entities/TransactionItem";
 import { Transaction } from "../entities/Transaction";
 import { User } from "../entities/User";
 
+function hideIdFromTransactionItems(items: any[]): any {
+  return items.map(item => {
+    delete item.id
+    return item
+  })
+}
+
 export async function insert(ctx: ParameterizedContext) {
   const transaction = new Transaction()
   transaction.buyer = new User(); transaction.buyer.id = ctx.state.user.id
@@ -48,7 +55,11 @@ export async function getCurrent(ctx: ParameterizedContext){
   if(res == null){
     throw notFound("Transaction not found.")
   }
-  ctx.body = res
+
+  ctx.body = res.map(transaction => {
+    transaction.items = hideIdFromTransactionItems(transaction.items) // Users dont need the ids of the transaction items.
+    return transaction
+  })
 }
 
 export async function cancelById(ctx: ParameterizedContext){

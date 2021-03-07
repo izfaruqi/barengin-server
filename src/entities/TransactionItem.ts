@@ -6,7 +6,7 @@ import { User } from "./User";
 
 @Entity()
 export class TransactionItem {
-  @PrimaryGeneratedColumn() // TODO: Remove this from transaction prints.
+  @PrimaryGeneratedColumn()
   id!: number
 
   @ManyToOne(() => Transaction, transaction => transaction.items)
