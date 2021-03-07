@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, Index } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, ManyToMany, Index, JoinTable } from 'typeorm'
+import { Group } from './Group'
 //import { Product } from './Group'
 
 @Entity()
@@ -61,8 +62,11 @@ export class User {
   })
   balance!: number
 
-  //@OneToMany(() => Product, product => product.seller)
-  //products!: Product[]
+  @OneToMany(() => Group, group => group.owner, { nullable: true })
+  groupsOwned!: Group[]
+
+  @ManyToMany(() => Group, { nullable: true })
+  groupsJoined!: Group[]
 
   @DeleteDateColumn({
     select: false,

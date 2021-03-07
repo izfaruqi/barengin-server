@@ -5,11 +5,17 @@ export async function errorHandler(ctx: ParameterizedContext, next: Next){
   try {
     await next()
   } catch (err) {
+    console.log(err)
     if(isBoom(err)){
       ctx.status = err.output.statusCode
       ctx.body = err.output.payload
     } else if(err.message == "Authentication Error") { // Error handler for malformed JWT. 
-      const authErr = unauthorized("Malformed JWT.")
+      let authErr
+      if(err.originalError.name == "TokenExpiredError"){
+        authErr = unauthorized("Expired JWT.")
+      } else {
+        authErr = unauthorized("Malformed JWT.")
+      }
       ctx.status = authErr.output.statusCode
       ctx.body = authErr.output.payload
     } else if (err.name == "ForbiddenError") {
