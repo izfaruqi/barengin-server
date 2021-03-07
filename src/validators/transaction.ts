@@ -14,7 +14,7 @@ const transactionItem = Joi.object({
 
 const transaction = {
   id: Joi.number(),
-  items: Joi.array().items(Joi.number())
+  items: Joi.array().items(Joi.number()).min(1)
 }
 
 export const insert: Config = {
