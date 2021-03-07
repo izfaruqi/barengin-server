@@ -18,8 +18,10 @@ export async function insert(ctx: ParameterizedContext) {
     }
     item.group = group!
     item.seller = item.group.owner
-    item.price = item.group.groupCategory.price
+    item.groupCategory = item.group.groupCategory
+    item.price = item.groupCategory.price
     item.name = item.group.name
+    item.categoryName = item.groupCategory.name
     item.transaction = transaction
     totalPrice += item.price
     await getConnection().getRepository(TransactionItem).insert(item)
