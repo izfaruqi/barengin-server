@@ -7,19 +7,28 @@ export class Group {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @Column()
+  @Column({
+    default: ""
+  })
   name!: string
 
-  @Column()
+  @Column({
+    default: ""
+  })
   slotsAvailable!: number
 
-  @Column()
+  @Column({
+    default: 0
+  })
   slotsTaken!: number
 
-  @Column()
+  @Column({
+    default: ""
+  })
   rules!: string
 
   @Column({
+    default: "",
     select: false
   })
   credentials!: string

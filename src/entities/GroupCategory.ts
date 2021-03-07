@@ -6,13 +6,19 @@ export class GroupCategory {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @Column()
+  @Column({
+    default: ""
+  })
   name!: string
 
-  @Column()
+  @Column({
+    default: 0
+  })
   price!: number
 
-  @Column()
+  @Column({
+    default: 0
+  })
   packagePrice!: number
   
   @Column({
