@@ -1,5 +1,6 @@
-import { Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TransactionItem } from "./TransactionItem";
+import { User } from "./User";
 
 @Entity()
 export class Transaction {
@@ -8,4 +9,13 @@ export class Transaction {
  
   @OneToMany(() => TransactionItem, transactionItem => transactionItem.transaction)
   items!: TransactionItem[]
+
+  @ManyToOne(() => User)
+  buyer!: User
+
+  @Column()
+  totalPrice!: number
+
+  @Column()
+  paid!: boolean
 }

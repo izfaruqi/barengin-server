@@ -14,9 +14,6 @@ export class TransactionItem {
   @ManyToOne(() => User)
   seller!: User
 
-  @ManyToOne(() => User)
-  buyer!: User
-
   @ManyToOne(() => Group)
   group!: Group
 
