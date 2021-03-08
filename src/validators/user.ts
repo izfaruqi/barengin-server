@@ -1,7 +1,7 @@
 import { Config, Joi } from "koa-joi-router";
 import { errorResponseValidator } from ".";
 
-const user = {
+export const user = {
   id: Joi.number(),
   email: Joi.string().email({ tlds: false }),
   password: Joi.string().min(8),
