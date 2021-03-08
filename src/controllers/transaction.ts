@@ -47,7 +47,7 @@ export async function insert(ctx: ParameterizedContext) {
       }
     }, { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
     savedTransaction.midtransRedirect = midtransData.redirect_url
-    savedTransaction.expiresAt = new Date(Date.now() + (3 * 60 * 60 * 1000))
+    savedTransaction.expiresAt = new Date(Date.now() + (3 * 60 * 60 * 1000)) // For now, this is set manually via Snap preferences.
     await trx.getRepository(Transaction).save(savedTransaction)
 
     ctx.body = { id: savedTransaction.id, midtransRedirect: midtransData.redirect_url }
