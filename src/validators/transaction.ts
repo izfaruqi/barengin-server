@@ -14,14 +14,18 @@ const transactionItem = Joi.object({
 
 const transaction = {
   id: Joi.number(),
-  items: Joi.array().items(Joi.number()).min(1)
+  items: Joi.array().items(Joi.number()).min(1),
+  paymentMethod: Joi.string().valid('midtrans', 'balance'),
+  transactionType: Joi.string().valid('sale', 'topup')
 }
 
 export const insert: Config = {
   validate: {
     type: 'json',
     body: {
-      items: transaction.items.required()
+      items: transaction.items.required(),
+      paymentMethod: transaction.paymentMethod.required(),
+      transactionType: transaction.transactionType.required()
     },
     output: {
       '400-599': {

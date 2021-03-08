@@ -1,9 +1,9 @@
-import { internal, notFound, unauthorized } from "@hapi/boom";
+import { internal, notFound, paymentRequired, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
 import { getConnection } from "typeorm";
 import { Group } from "../entities/Group";
 import { TransactionItem } from "../entities/TransactionItem";
-import { PaymentStatus, Transaction } from "../entities/Transaction";
+import { PaymentMethod, PaymentStatus, Transaction } from "../entities/Transaction";
 import { User } from "../entities/User";
 import axios from 'axios'
 
@@ -38,19 +38,29 @@ export async function insert(ctx: ParameterizedContext) {
     }))
     transaction.items = items
     transaction.totalPrice = totalPrice
+    transaction.expiresAt = new Date(Date.now() + (3 * 60 * 60 * 1000)) // For now, this is set manually via Snap preferences.
     const savedTransaction = await trx.getRepository(Transaction).save(transaction)
 
-    const midtransData = await axios.post("https://app.sandbox.midtrans.com/snap/v1/transactions", {
-      transaction_details: {
-        order_id: savedTransaction.id,
-        gross_amount: savedTransaction.totalPrice
-      }
-    }, { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
-    savedTransaction.midtransRedirect = midtransData.redirect_url
-    savedTransaction.expiresAt = new Date(Date.now() + (3 * 60 * 60 * 1000)) // For now, this is set manually via Snap preferences.
-    await trx.getRepository(Transaction).save(savedTransaction)
+    if(ctx.request.body.paymentMethod == PaymentMethod.MIDTRANS){
+      const midtransData = await axios.post("https://app.sandbox.midtrans.com/snap/v1/transactions", {
+        transaction_details: {
+          order_id: savedTransaction.id,
+          gross_amount: savedTransaction.totalPrice
+        }
+      }, { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
+      savedTransaction.midtransRedirect = midtransData.redirect_url
+      savedTransaction.paymentMethod = PaymentMethod.MIDTRANS
+      await trx.getRepository(Transaction).save(savedTransaction)
 
-    ctx.body = { id: savedTransaction.id, midtransRedirect: midtransData.redirect_url }
+      ctx.body = { id: savedTransaction.id, midtransRedirect: midtransData.redirect_url }
+    } else if(ctx.request.body.paymentMethod == PaymentMethod.BALANCE){
+      await trx.getRepository(User).decrement({ id: ctx.state.user.id }, "balance", totalPrice)
+      if((await trx.getRepository(User).findOne(ctx.state.user.id, { select: ["balance"]}))!.balance < 0){
+        throw paymentRequired("Insufficient balance.")
+      }
+      await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
+      ctx.body = { id: savedTransaction.id }
+    }
   })
 }
 

@@ -13,10 +13,22 @@ export enum PaymentStatus {
   EXPIRED = "expired",
   SETTLED = "settled"
 }
+
+export enum TransactionType {
+  SALE = "sale",
+  TOPUP = "topup"
+}
 @Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()
   id!: number
+
+  @Column({
+    type: "enum",
+    enum: TransactionType,
+    default: TransactionType.SALE
+  })
+  transactionType!: TransactionType
  
   @OneToMany(() => TransactionItem, transactionItem => transactionItem.transaction)
   items!: TransactionItem[]
