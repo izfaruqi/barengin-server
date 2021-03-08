@@ -13,7 +13,7 @@ export class Group {
   name!: string
 
   @Column({
-    default: ""
+    default: 0
   })
   slotsAvailable!: number
 
