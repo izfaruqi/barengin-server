@@ -66,3 +66,16 @@ export const cancelById: Config = {
     },
   }
 }
+
+export const midtransManualUpdateStatus: Config = {
+  validate: {
+    params: {
+      id: transaction.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}

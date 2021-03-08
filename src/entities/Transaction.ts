@@ -2,6 +2,17 @@ import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGenerate
 import { TransactionItem } from "./TransactionItem";
 import { User } from "./User";
 
+export enum PaymentMethod {
+  MIDTRANS = "midtrans",
+  BALANCE = "balance"
+}
+
+export enum PaymentStatus {
+  PENDING = "pending",
+  CANCELLED = "cancelled",
+  EXPIRED = "expired",
+  SETTLED = "settled"
+}
 @Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()
@@ -19,14 +30,36 @@ export class Transaction {
   totalPrice!: number
 
   @Column({
-    default: false
+    type: "enum",
+    enum: PaymentStatus,
+    default: PaymentStatus.PENDING
   })
-  paid!: boolean
+  paymentStatus!: PaymentStatus
 
   @Column({
-    default: false
+    type: "enum",
+    enum: PaymentMethod,
+    default: PaymentMethod.MIDTRANS
   })
-  cancelled!: boolean
+  paymentMethod!: PaymentMethod
+
+  @Column({
+    nullable: true
+  })
+  midtransRedirect!: string
+
+  @Column({
+    nullable: true,
+    type: "text",
+    select: false
+  })
+  successPayload!: string
+
+  @Column({ nullable: true })
+  paidAt!: Date
+
+  @Column({ nullable: true })
+  expiresAt!: Date
 
   @CreateDateColumn()
   createdAt!: Date
