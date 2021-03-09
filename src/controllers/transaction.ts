@@ -1,9 +1,9 @@
-import { internal, notFound, paymentRequired, unauthorized } from "@hapi/boom";
+import { badRequest, forbidden, notFound, paymentRequired, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
 import { getConnection } from "typeorm";
 import { Group } from "../entities/Group";
 import { TransactionItem } from "../entities/TransactionItem";
-import { PaymentMethod, PaymentStatus, Transaction } from "../entities/Transaction";
+import { PaymentMethod, PaymentStatus, Transaction, TransactionType } from "../entities/Transaction";
 import { User } from "../entities/User";
 import axios from 'axios'
 
@@ -19,24 +19,32 @@ export async function insert(ctx: ParameterizedContext) {
     const transaction = new Transaction()
     transaction.buyer = new User(); transaction.buyer.id = ctx.state.user.id
     let totalPrice = 0
-    const items: TransactionItem[] = await Promise.all(ctx.request.body.items.map(async (itemId: number) => {
-      const item = new TransactionItem()
-      const group = await trx.getRepository(Group).findOne({ where: { id: itemId }, relations: ["groupCategory", "owner"]})
-      if(group == undefined){
-        throw notFound("Group with id " + itemId + " not found.")
+    if(ctx.request.body.transactionType == TransactionType.TOPUP){
+      transaction.transactionType = TransactionType.TOPUP
+      totalPrice = ctx.request.body.topupAmount
+    } else {
+      transaction.transactionType = TransactionType.SALE
+      if(ctx.request.body.items == null || ctx.request.body.items.length < 1){
+        throw badRequest("Must have at least 1 item.")
       }
-      item.group = group!
-      item.seller = item.group.owner
-      item.groupCategory = item.group.groupCategory
-      item.price = item.groupCategory.price
-      item.name = item.group.name
-      item.categoryName = item.groupCategory.name
-      item.transaction = transaction
-      totalPrice += item.price
-      await trx.getRepository(TransactionItem).insert(item)
-      return item
-    }))
-    transaction.items = items
+      transaction.items = await Promise.all(ctx.request.body.items.map(async (itemId: number) => {
+        const item = new TransactionItem()
+        const group = await trx.getRepository(Group).findOne({ where: { id: itemId }, relations: ["groupCategory", "owner"]})
+        if(group == undefined){
+          throw notFound("Group with id " + itemId + " not found.")
+        }
+        item.group = group!
+        item.seller = item.group.owner
+        item.groupCategory = item.group.groupCategory
+        item.price = item.groupCategory.price
+        item.name = item.group.name
+        item.categoryName = item.groupCategory.name
+        item.transaction = transaction
+        totalPrice += item.price
+        await trx.getRepository(TransactionItem).insert(item)
+        return item
+      }))
+    }
     transaction.totalPrice = totalPrice
     transaction.expiresAt = new Date(Date.now() + (3 * 60 * 60 * 1000)) // For now, this is set manually via Snap preferences.
     const savedTransaction = await trx.getRepository(Transaction).save(transaction)
@@ -54,6 +62,9 @@ export async function insert(ctx: ParameterizedContext) {
 
       ctx.body = { id: savedTransaction.id, midtransRedirect: midtransData.redirect_url }
     } else if(ctx.request.body.paymentMethod == PaymentMethod.BALANCE){
+      if(ctx.request.body.transactionType == TransactionType.TOPUP){
+        throw forbidden("Cant top up with balance!")
+      }
       await trx.getRepository(User).decrement({ id: ctx.state.user.id }, "balance", totalPrice)
       if((await trx.getRepository(User).findOne(ctx.state.user.id, { select: ["balance"]}))!.balance < 0){
         throw paymentRequired("Insufficient balance.")
@@ -76,10 +87,19 @@ export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
     throw notFound("Transaction does not exist.")
   } else if(midtransData.status_code == "200"){
     await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(midtransData), midtransRedirect: undefined, paidAt: new Date(midtransData.settlement_time) })
+    await settleTransaction(parseInt(ctx.request.params.id))
     ctx.body = { status: PaymentStatus.SETTLED }
   } else {
     await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.PENDING })
     ctx.body = { status: PaymentStatus.PENDING }
+  }
+}
+
+async function settleTransaction(transactionId: number){
+  const transactionDetails = (await getConnection().getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer"] }))!
+  if(transactionDetails.transactionType == TransactionType.TOPUP){
+    console.log(transactionDetails.buyer.id)
+    await getConnection().getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   }
 }
 

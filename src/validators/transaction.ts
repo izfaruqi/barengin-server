@@ -23,7 +23,8 @@ export const insert: Config = {
   validate: {
     type: 'json',
     body: {
-      items: transaction.items.required(),
+      items: transaction.items,
+      topupAmount: Joi.number().min(0),
       paymentMethod: transaction.paymentMethod.required(),
       transactionType: transaction.transactionType.required()
     },
