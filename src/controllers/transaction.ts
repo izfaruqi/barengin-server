@@ -149,7 +149,15 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function cancelById(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.CANCELLED })
+  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { select: ["paymentStatus"] })
+  if(transaction == null){
+    throw notFound("Transaction not found.")
+  }
+  if(transaction.paymentStatus == PaymentStatus.SETTLED){
+    throw forbidden("Can't cancel settled transaction.")
+  }
+  const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.CANCELLED, midtransRedirect: undefined })
+  await axios.post("https://api.sandbox.midtrans.com/v2/" + ctx.request.params.id + "/cancel", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }, headers: { "Accept": "application/json" }}).then(res => res.data)
   if(res == null){
     throw notFound("Transaction not found.")
   }
