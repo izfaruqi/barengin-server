@@ -1,6 +1,6 @@
 import { badRequest, forbidden, notFound, paymentRequired, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
-import { getConnection } from "typeorm";
+import { Connection, EntityManager, getConnection } from "typeorm";
 import { Group } from "../entities/Group";
 import { TransactionItem } from "../entities/TransactionItem";
 import { PaymentMethod, PaymentStatus, Transaction, TransactionType } from "../entities/Transaction";
@@ -71,7 +71,7 @@ export async function insert(ctx: ParameterizedContext) {
         throw paymentRequired("Insufficient balance.")
       }
       await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
-      await settleTransaction(savedTransaction.id)
+      await settleTransaction(savedTransaction.id, trx)
       ctx.body = { id: savedTransaction.id }
     }
   })
@@ -120,10 +120,21 @@ export async function midtransNotification(ctx: ParameterizedContext){
   }
 }
 
-async function settleTransaction(transactionId: number){
-  const transactionDetails = (await getConnection().getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer"] }))!
+async function settleTransaction(transactionId: number, trxEntityManager?: EntityManager){
+  let db: Connection | EntityManager = getConnection()
+  if(trxEntityManager != null){
+    db = trxEntityManager
+  }
+  const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group"] }))!
   if(transactionDetails.transactionType == TransactionType.TOPUP){
-    await getConnection().getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
+    await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
+  } else { // Transaction type is sale.
+    const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
+    await Promise.all(transactionDetails.items.map(async item => {
+      await groupQuery.of(item.group).add(transactionDetails.buyer)
+      await db.getRepository(Group).decrement({ id: item.group.id }, "slotsAvailable", 1)
+      await db.getRepository(Group).increment({ id: item.group.id }, "slotsTaken", 1)
+    }))
   }
 }
 
