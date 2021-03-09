@@ -102,16 +102,17 @@ export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
 }
 
 export async function midtransNotification(ctx: ParameterizedContext){
-  console.log("Midtrans notification: " + ctx.request.body.order_id)
-  const transactionId = parseInt(ctx.request.body.order_id)
-  const { status_code, gross_amount, signature_key } = ctx.request.body
-  const expectedHash = crypto.createHash('sha512').update(ctx.request.body.order_id + status_code + gross_amount + process.env.MIDTRANS_SERVER_KEY).digest("hex")
+  const { status_code, gross_amount, signature_key, order_id } = ctx.request.body
+  console.log("Midtrans notification: " + order_id)
+  const expectedHash = crypto.createHash('sha512').update(order_id + status_code + gross_amount + process.env.MIDTRANS_SERVER_KEY).digest("hex")
   if(expectedHash == signature_key){
     if(status_code == "200"){
-      if((await getConnection().getRepository(Transaction).findOne({ id: ctx.request.body.order_id }, { select: ["paymentStatus"] }))?.paymentStatus != PaymentStatus.SETTLED)
-      console.log("Midtrans settlement: " + ctx.request.body.order_id)
-      await getConnection().getRepository(Transaction).update(transactionId, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(ctx.request.body), midtransRedirect: undefined, paidAt: new Date(ctx.request.body.settlement_time) })
-      await settleTransaction(transactionId)
+      if((await getConnection().getRepository(Transaction).findOne({ id: order_id }, { select: ["paymentStatus"] }))?.paymentStatus != PaymentStatus.SETTLED){
+        ctx.body = { status: PaymentStatus.SETTLED }
+      }
+      console.log("Midtrans settlement: " + order_id)
+      await getConnection().getRepository(Transaction).update(order_id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(ctx.request.body), midtransRedirect: undefined, paidAt: new Date(ctx.request.body.settlement_time) })
+      await settleTransaction(parseInt(order_id))
       ctx.body = { status: PaymentStatus.SETTLED }
     }
   } else {
