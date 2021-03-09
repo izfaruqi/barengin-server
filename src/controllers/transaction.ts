@@ -7,6 +7,7 @@ import { PaymentMethod, PaymentStatus, Transaction, TransactionType } from "../e
 import { User } from "../entities/User";
 import axios from 'axios'
 import crypto from 'crypto'
+import { Review } from "../entities/Review";
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -131,6 +132,10 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
     await Promise.all(transactionDetails.items.map(async item => {
+      const review = new Review()
+      review.owner = transactionDetails.buyer
+      review.group = item.group
+      await db.getRepository(Review).insert(review)
       await groupQuery.of(item.group).add(transactionDetails.buyer)
       await db.getRepository(Group).decrement({ id: item.group.id }, "slotsAvailable", 1)
       await db.getRepository(Group).increment({ id: item.group.id }, "slotsTaken", 1)
