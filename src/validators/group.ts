@@ -43,6 +43,16 @@ export const getAll: Config = {
   }
 }
 
+export const getJoined: Config = {
+  validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getAllByCategory: Config = {
   validate: {
     params: {

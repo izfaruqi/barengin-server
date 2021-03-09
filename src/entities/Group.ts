@@ -39,7 +39,7 @@ export class Group {
   @ManyToOne(() => User, user => user.groupsOwned, { nullable: false })
   owner!: User
 
-  @ManyToMany(() => User, { nullable: true })
+  @ManyToMany(() => User, user => user.groupsJoined, { nullable: true })
   @JoinTable()
   members!: User[]
 

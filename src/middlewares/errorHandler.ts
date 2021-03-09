@@ -10,8 +10,9 @@ export async function errorHandler(ctx: ParameterizedContext, next: Next){
       ctx.status = err.output.statusCode
       ctx.body = err.output.payload
     } else if(err.message == "Authentication Error") { // Error handler for malformed JWT. 
+      console.log("HERE")
       let authErr
-      if(err.originalError.name == "TokenExpiredError"){
+      if(err.originalError?.name == "TokenExpiredError"){
         authErr = unauthorized("Expired JWT.")
       } else {
         authErr = unauthorized("Malformed JWT.")

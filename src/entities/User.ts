@@ -65,7 +65,7 @@ export class User {
   @OneToMany(() => Group, group => group.owner, { nullable: true })
   groupsOwned!: Group[]
 
-  @ManyToMany(() => Group, { nullable: true })
+  @ManyToMany(() => Group, group => group.members, { nullable: true })
   groupsJoined!: Group[]
 
   @DeleteDateColumn({
