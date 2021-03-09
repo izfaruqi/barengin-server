@@ -76,23 +76,27 @@ export async function insert(ctx: ParameterizedContext) {
 }
 
 export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
+  const transactionData = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { where: { buyer: { id: ctx.state.user.id }}})
   if(!ctx.state.user.isAdmin){
-    const owner = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { where: { buyer: { id: ctx.state.user.id }}})
-    if(owner == null) {
+    if(transactionData == null) {
       throw unauthorized("Transaction does not belong to this user.")
     }
   }
-  const midtransData = await axios.get("https://api.sandbox.midtrans.com/v2/" + ctx.request.params.id + "/status", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
-  if(midtransData.status_code == "404"){
-    throw notFound("Transaction does not exist.")
-  } else if(midtransData.status_code == "200"){
-    await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(midtransData), midtransRedirect: undefined, paidAt: new Date(midtransData.settlement_time) })
-    await settleTransaction(parseInt(ctx.request.params.id))
-    ctx.body = { status: PaymentStatus.SETTLED }
+  if(transactionData?.paymentStatus == PaymentStatus.PENDING){
+    const midtransData = await axios.get("https://api.sandbox.midtrans.com/v2/" + ctx.request.params.id + "/status", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
+    if(midtransData.status_code == "404"){
+      throw notFound("Transaction does not exist.")
+    } else if(midtransData.status_code == "200"){
+      await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(midtransData), midtransRedirect: undefined, paidAt: new Date(midtransData.settlement_time) })
+      await settleTransaction(parseInt(ctx.request.params.id))
+      ctx.body = { status: PaymentStatus.SETTLED }
+    } else {
+      await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.PENDING })
+      ctx.body = { status: PaymentStatus.PENDING }
+    }
   } else {
-    await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.PENDING })
-    ctx.body = { status: PaymentStatus.PENDING }
-  }
+    throw forbidden("Transaction is not eligible for rechecking.")
+  } 
 }
 
 async function settleTransaction(transactionId: number){
