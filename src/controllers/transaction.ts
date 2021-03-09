@@ -70,6 +70,7 @@ export async function insert(ctx: ParameterizedContext) {
         throw paymentRequired("Insufficient balance.")
       }
       await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
+      await settleTransaction(savedTransaction.id)
       ctx.body = { id: savedTransaction.id }
     }
   })
