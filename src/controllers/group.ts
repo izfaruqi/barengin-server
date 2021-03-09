@@ -110,14 +110,26 @@ export async function getById(ctx: ParameterizedContext){
 
 export async function getJoined(ctx: ParameterizedContext){
   ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user")
-  .leftJoinAndSelect("user.groupsJoined", "groupsJoined")
-  .leftJoin("groupsJoined.owner", "owner")
-  .leftJoin("groupsJoined.members", "members")
-  .where("user.id = :id", { id: ctx.state.user.id })
-  .addSelect("groupsJoined.credentials")
-  .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
-  .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
-  .getOne())?.groupsJoined
+    .leftJoinAndSelect("user.groupsJoined", "groupsJoined")
+    .leftJoin("groupsJoined.owner", "owner")
+    .leftJoin("groupsJoined.members", "members")
+    .where("user.id = :id", { id: ctx.state.user.id })
+    .addSelect("groupsJoined.credentials")
+    .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
+    .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
+    .getOne())?.groupsJoined
+}
+
+export async function getOwned(ctx: ParameterizedContext){
+  ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user")
+    .leftJoinAndSelect("user.groupsOwned", "groupsOwned")
+    .leftJoin("groupsOwned.owner", "owner")
+    .leftJoin("groupsOwned.members", "members")
+    .where("user.id = :id", { id: ctx.state.user.id })
+    .addSelect("groupsOwned.credentials")
+    .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
+    .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
+    .getOne())?.groupsOwned
 }
 
 export async function deleteById(ctx: ParameterizedContext){

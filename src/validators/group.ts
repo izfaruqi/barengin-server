@@ -53,6 +53,16 @@ export const getJoined: Config = {
   }
 }
 
+export const getOwned: Config = {
+  validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getAllByCategory: Config = {
   validate: {
     params: {
