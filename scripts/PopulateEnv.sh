@@ -9,7 +9,9 @@ else
   echo "File env does not exist. Creating env file";
 fi;
 
-echo "PORT=8080" > .env;
+cp /home/ec2-user/.env ./.env;
+
+echo "PORT=8080" >> .env;
 echo "HOSTNAME=127.0.0.1" >> .env;
 
 echo "JWT_SECRET=$(echo 'ThisIsASecretKey' | base64)" >> .env;
