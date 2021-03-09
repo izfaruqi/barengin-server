@@ -84,3 +84,15 @@ export const midtransManualUpdateStatus: Config = {
     },
   }
 }
+
+export const midtransNotification: Config = {
+  validate: {
+    type: 'json',
+    body: Joi.object(),
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}

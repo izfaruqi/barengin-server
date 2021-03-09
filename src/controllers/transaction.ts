@@ -6,6 +6,7 @@ import { TransactionItem } from "../entities/TransactionItem";
 import { PaymentMethod, PaymentStatus, Transaction, TransactionType } from "../entities/Transaction";
 import { User } from "../entities/User";
 import axios from 'axios'
+import crypto from 'crypto'
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -100,10 +101,27 @@ export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
   } 
 }
 
+export async function midtransNotification(ctx: ParameterizedContext){
+  console.log("Midtrans notification: " + ctx.request.body.order_id)
+  const transactionId = parseInt(ctx.request.body.order_id)
+  const { status_code, gross_amount, signature_key } = ctx.request.body
+  const expectedHash = crypto.createHash('sha512').update(ctx.request.body.order_id + status_code + gross_amount + process.env.MIDTRANS_SERVER_KEY).digest("hex")
+  if(expectedHash == signature_key){
+    if(status_code == "200"){
+      if((await getConnection().getRepository(Transaction).findOne({ id: ctx.request.body.order_id }, { select: ["paymentStatus"] }))?.paymentStatus != PaymentStatus.SETTLED)
+      console.log("Midtrans settlement: " + ctx.request.body.order_id)
+      await getConnection().getRepository(Transaction).update(transactionId, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(ctx.request.body), midtransRedirect: undefined, paidAt: new Date(ctx.request.body.settlement_time) })
+      await settleTransaction(transactionId)
+      ctx.body = { status: PaymentStatus.SETTLED }
+    }
+  } else {
+    throw forbidden("Signature key mismatch.")
+  }
+}
+
 async function settleTransaction(transactionId: number){
   const transactionDetails = (await getConnection().getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer"] }))!
   if(transactionDetails.transactionType == TransactionType.TOPUP){
-    console.log(transactionDetails.buyer.id)
     await getConnection().getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   }
 }
