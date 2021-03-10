@@ -16,7 +16,7 @@ export class BalanceMutation {
   })
   mutation!: number
 
-  @ManyToOne(() => User, user => user.balanceMutations)
+  @ManyToOne(() => User, user => user.balanceMutations, { nullable: true })
   owner!: User
 
   @Column({
