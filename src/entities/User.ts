@@ -11,7 +11,6 @@ export class User {
     unique: true,
     select: false
   })
-  @Index()
   firebaseUid!: string
 
   @Column({
