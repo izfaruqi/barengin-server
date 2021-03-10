@@ -39,6 +39,20 @@ export const insert: Config = {
   }
 }
 
+export const withdrawBalance: Config = {
+  validate: {
+    type: 'json',
+    body: {
+      amount: Joi.number().min(1).required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getCurrent: Config = {
   validate: {
     output: {

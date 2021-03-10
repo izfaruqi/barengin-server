@@ -172,6 +172,17 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
   }
 }
 
+export async function withdrawBalance(ctx: ParameterizedContext) {
+  await getConnection().transaction(async trx => {
+    await trx.getRepository(User).decrement({ id: ctx.state.user.id }, "balance", ctx.request.body.amount)
+    if((await trx.getRepository(User).findOne({ where: { id: ctx.state.user.id } }))!.balance < 0){
+      throw paymentRequired("Insufficient balance.")
+    }
+    await trx.getRepository(BalanceMutation).insert({ mutation: ctx.request.body.amount * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: ctx.state.user.id } })
+  })
+  ctx.body = { amount: ctx.request.body.amount }
+}
+
 // Admin only
 export async function getById(ctx: ParameterizedContext){
   const res = await getConnection().getRepository(Transaction).findOne({ where: { id: ctx.request.params.id }, relations: ["items", "buyer"]})
