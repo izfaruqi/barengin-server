@@ -33,4 +33,7 @@ export class Review {
     default: false
   })
   anonymous!: boolean
+
+  @Column({ nullable: true })
+  publishedAt!: Date
 }

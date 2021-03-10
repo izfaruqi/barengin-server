@@ -49,7 +49,7 @@ export async function editById(ctx: ParameterizedContext) {
   }
 }
 
-function safeGetGroupQuery(includeMembers: boolean = false): SelectQueryBuilder<Group>{
+function safeGetGroupQuery(includeMembers: boolean = false, includeReviews: boolean = false): SelectQueryBuilder<Group>{
   const query = getConnection().getRepository(Group).createQueryBuilder("group")
     .leftJoin("group.owner", "owner")
     .leftJoin("group.members", "members")
@@ -58,6 +58,12 @@ function safeGetGroupQuery(includeMembers: boolean = false): SelectQueryBuilder<
     .addSelect("owner.firstName").addSelect("owner.lastName").addSelect("owner.id")
   if(includeMembers){
     query.addSelect("members.firstName").addSelect("members.lastName").addSelect("members.id")
+  }
+  if(includeReviews){
+    query
+      .leftJoinAndSelect("group.reviews", "reviews")
+      .leftJoin("reviews.owner", "reviewsOwner")
+      .addSelect("reviewsOwner.firstName").addSelect("reviewsOwner.lastName").addSelect("reviewsOwner.id")
   }
   return query
 }
@@ -77,7 +83,7 @@ export async function getAllByCategory(ctx: ParameterizedContext) {
 }
 
 async function getByIdFull(ctx: ParameterizedContext){
-  const group = await safeGetGroupQuery(true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
+  const group = await safeGetGroupQuery(true, true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
   if(!group){
     notFound("Group not found")
   }
@@ -89,10 +95,16 @@ async function getByIdFull(ctx: ParameterizedContext){
 }
 
 async function getByIdNonFull(ctx: ParameterizedContext) {
-  const group = await safeGetGroupQuery().where("group.id = :id", { id: ctx.request.params.id }).getOne()
+  const group = await safeGetGroupQuery(false, true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
   if(!group){
     throw notFound("Group not found.")
   }
+  group.reviews = group.reviews.map((review: any) => {
+    if(review.anonymous){
+      delete review.owner
+    }
+    return review
+  })
   ctx.body = group
 }
 
