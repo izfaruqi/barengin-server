@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, ManyToMany, Index, JoinTable } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, ManyToMany, Index, JoinTable, In } from 'typeorm'
 import { BalanceMutation } from './BalanceMutation'
 import { Group } from './Group'
 import { Review } from './Review'
@@ -26,11 +26,13 @@ export class User {
   emailVerified!: boolean
 
   @Column()
+  @Index()
   firstName!: string
 
   @Column({
     default: ""
   })
+  @Index()
   lastName!: string
 
   @Column({
