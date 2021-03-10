@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
-import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory } from '../controllers/group'
-import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator } from '../validators/group'
+import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned } from '../controllers/group'
+import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator } from '../validators/group'
 import isSeller from '../middlewares/isSeller'
 import isAdmin from '../middlewares/isAdmin'
 
@@ -19,6 +19,18 @@ const routes: Spec[] = [
     path: "/",
     validate: getAllValidator.validate,
     handler: [jwt, isAdmin, getAllAdmin]
+  },
+  {
+    method: "GET",
+    path: "/joined",
+    validate: getJoinedValidator.validate,
+    handler: [jwt, getJoined]
+  },
+  {
+    method: "GET",
+    path: "/owned",
+    validate: getOwnedValidator.validate,
+    handler: [jwt, isSeller, getOwned]
   },
   {
     method: "GET",

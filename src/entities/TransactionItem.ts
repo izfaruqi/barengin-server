@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./Group";
 import { GroupCategory } from "./GroupCategory";
+import { Review } from "./Review";
 import { Transaction } from "./Transaction";
 import { User } from "./User";
 
@@ -20,6 +21,9 @@ export class TransactionItem {
 
   @ManyToOne(() => GroupCategory)
   groupCategory!: GroupCategory
+
+  @OneToMany(() => Review, review => review.transactionItem, { nullable: true })
+  review!: Review
 
   // The three columns below are included to act as "snapshots"
   // in case that the original price, name, and category name changed.
