@@ -26,4 +26,10 @@ export class BalanceMutation {
     default: BalanceMutationStatus.SETTLED
   })
   mutationStatus!: BalanceMutationStatus
+
+  @Column()
+  createdAt!: Date
+
+  @Column({ nullable: true })
+  settledAt!: Date
 }

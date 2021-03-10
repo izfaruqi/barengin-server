@@ -96,7 +96,6 @@ export async function insert(ctx: ParameterizedContext) {
       if((await trx.getRepository(User).findOne(ctx.state.user.id, { select: ["balance"]}))!.balance < 0){
         throw paymentRequired("Insufficient balance.")
       }
-
       await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
       await settleTransaction(savedTransaction.id, trx)
       ctx.body = { id: savedTransaction.id }
@@ -148,15 +147,16 @@ export async function midtransNotification(ctx: ParameterizedContext){
 }
 
 async function settleTransaction(transactionId: number, trxEntityManager?: EntityManager){
+  const now = new Date()
   let db: Connection | EntityManager = getConnection()
   if(trxEntityManager != null){
     db = trxEntityManager
   }
   const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller"] }))!
-  await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: transactionDetails.buyer.id } })
+  await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: transactionDetails.buyer.id }, createdAt: now, settledAt: now })
 
   if(transactionDetails.transactionType == TransactionType.TOPUP){
-    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, mutationStatus: BalanceMutationStatus.SETTLED })
+    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now, settledAt: now })
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
@@ -166,7 +166,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       review.group = item.group
       review.transactionItem = item
       await db.getRepository(Review).insert(review)
-      await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id } })
+      await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
       await groupQuery.of(item.group).add(transactionDetails.buyer)
     }))
   }
