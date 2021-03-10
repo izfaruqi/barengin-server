@@ -16,6 +16,7 @@ export class BalanceMutation {
   })
   mutation!: number
 
+  // If owner is null, the mutation goes to the system. E.g. top ups and fees. 
   @ManyToOne(() => User, user => user.balanceMutations, { nullable: true })
   owner!: User
 
