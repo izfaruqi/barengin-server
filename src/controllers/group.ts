@@ -144,6 +144,14 @@ export async function getOwned(ctx: ParameterizedContext){
     .getOne())?.groupsOwned
 }
 
+export async function search(ctx: ParameterizedContext){
+  // Full-text search is not used because of weird bugs.
+  ctx.body = await safeGetGroupQuery()
+    .where("groupCategory.id = :categoryId", { categoryId: ctx.request.params.categoryId })
+    .andWhere("(group.name LIKE :query OR owner.firstName LIKE :query OR owner.lastName LIKE :query)", { query: "%" + ctx.request.query.query + "%" })
+    .getMany()
+}
+
 export async function deleteById(ctx: ParameterizedContext){
   const res = await getConnection().getRepository(Group).softDelete(ctx.request.params.id)
   if(res.raw.affectedRows == 0){
