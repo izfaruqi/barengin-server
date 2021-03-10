@@ -1,5 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./Group";
+import { TransactionItem } from "./TransactionItem";
 import { User } from "./User";
 
 @Entity()
@@ -12,6 +13,9 @@ export class Review {
 
   @ManyToOne(() => Group, group => group.reviews)
   group!: Group
+
+  @ManyToOne(() => TransactionItem, transactionItem => transactionItem.review)
+  transactionItem!: TransactionItem
 
   @Column({
     default: 5

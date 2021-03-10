@@ -135,6 +135,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       const review = new Review()
       review.owner = transactionDetails.buyer
       review.group = item.group
+      review.transactionItem = item
       await db.getRepository(Review).insert(review)
       await groupQuery.of(item.group).add(transactionDetails.buyer)
       await db.getRepository(Group).decrement({ id: item.group.id }, "slotsAvailable", 1)
