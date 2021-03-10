@@ -23,8 +23,7 @@ export class Review {
   rating!: number
 
   @Column({
-    type: "text",
-    default: ""
+    type: "text"
   })
   content!: string
 
