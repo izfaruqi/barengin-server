@@ -14,8 +14,13 @@ export async function editById(ctx: ParameterizedContext){
 
   const edits = ctx.request.body
   if(!review.published){
-    review.rating = edits.rating
-    review.published = edits.published
+    if(edits.rating != null) review.rating = edits.rating
+    if(edits.published != null) {
+      review.published = edits.published
+      if(edits.published){
+        review.publishedAt = new Date()
+      } 
+    }
   } else {
     if(edits.rating != null || edits.published != null){
       throw forbidden("Can't edit rating/published when the review is already published!")
@@ -23,6 +28,6 @@ export async function editById(ctx: ParameterizedContext){
   }
   if(edits.anonymous != null) review.anonymous = edits.anonymous
   if(edits.content != null) review.content = edits.content
-  await getConnection().getRepository(Review).update(ctx.request.params.id, edits)
+  await getConnection().getRepository(Review).update(ctx.request.params.id, review)
   ctx.body = edits
 }
