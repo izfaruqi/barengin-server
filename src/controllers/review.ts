@@ -9,10 +9,12 @@ export async function getCurrent(ctx: ParameterizedContext){
 
 export async function getCurrentAsSeller(ctx: ParameterizedContext){
   ctx.body = await getConnection().getRepository(Review).createQueryBuilder("review")
+    .leftJoinAndSelect("review.transactionItem", "transactionItem")
+    .leftJoinAndSelect("review.group", "group")
     .leftJoin("review.owner", "reviewOwner")
-    .leftJoin("review.group", "group")
     .leftJoin("group.owner", "owner")
     .andWhere("owner.id = :id", { id: ctx.state.user.id })
+    .andWhere("review.published IS TRUE")
     .addSelect("reviewOwner.id").addSelect("reviewOwner.firstName").addSelect("reviewOwner.lastName")
     .getMany() 
 }
