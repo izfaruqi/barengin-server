@@ -115,6 +115,22 @@ export const editById: Config = {
   }
 }
 
+export const search: Config = {
+  validate: {
+    params: {
+      categoryId: group.id.required()
+    },
+    query: {
+      query: Joi.string().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const deleteById: Config = {
   validate: {
     params: {

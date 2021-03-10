@@ -7,6 +7,18 @@ export async function getCurrent(ctx: ParameterizedContext){
   ctx.body = await getConnection().getRepository(Review).find({ where: { owner: { id: ctx.state.user.id }}, relations: ["group"] })
 }
 
+export async function getCurrentAsSeller(ctx: ParameterizedContext){
+  ctx.body = await getConnection().getRepository(Review).createQueryBuilder("review")
+    .leftJoinAndSelect("review.transactionItem", "transactionItem")
+    .leftJoinAndSelect("review.group", "group")
+    .leftJoin("review.owner", "reviewOwner")
+    .leftJoin("group.owner", "owner")
+    .andWhere("owner.id = :id", { id: ctx.state.user.id })
+    .andWhere("review.published IS TRUE")
+    .addSelect("reviewOwner.id").addSelect("reviewOwner.firstName").addSelect("reviewOwner.lastName")
+    .getMany() 
+}
+
 export async function editById(ctx: ParameterizedContext){
   const review = await getConnection().getRepository(Review).findOne({ where: { id: ctx.request.params.id }, loadRelationIds: true })
   if(review == null) throw notFound("Review not found.")

@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
-import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned } from '../controllers/group'
-import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator } from '../validators/group'
+import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned, search } from '../controllers/group'
+import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator, search as searchValidator } from '../validators/group'
 import isSeller from '../middlewares/isSeller'
 import isAdmin from '../middlewares/isAdmin'
 
@@ -49,6 +49,12 @@ const routes: Spec[] = [
     path: "/:id",
     validate: editByIdValidator.validate,
     handler: [jwt, editById]
+  },
+  {
+    method: "GET",
+    path: "/:categoryId/search",
+    validate: searchValidator.validate,
+    handler: [jwt, search]
   },
   {
     method: "DELETE",

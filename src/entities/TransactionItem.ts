@@ -28,6 +28,11 @@ export class TransactionItem {
   // The three columns below are included to act as "snapshots"
   // in case that the original price, name, and category name changed.
   @Column({
+    default: 1
+  })
+  slotsTaken!: number
+
+  @Column({
     default: 0
   })
   price!: number

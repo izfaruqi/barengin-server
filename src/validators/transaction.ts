@@ -9,12 +9,15 @@ const userSafe = Joi.object({
 })
 
 const transactionItem = Joi.object({
-
+  
 })
 
 const transaction = {
   id: Joi.number(),
-  items: Joi.array().items(Joi.number()).min(1),
+  items: Joi.array().items(Joi.object({
+    id: Joi.number().required(),
+    slotsTaken: Joi.number().min(1).default(1)
+  })).min(1),
   paymentMethod: Joi.string().valid('midtrans', 'balance'),
   transactionType: Joi.string().valid('sale', 'topup')
 }
@@ -27,6 +30,20 @@ export const insert: Config = {
       topupAmount: Joi.number().min(0),
       paymentMethod: transaction.paymentMethod.required(),
       transactionType: transaction.transactionType.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const withdrawBalance: Config = {
+  validate: {
+    type: 'json',
+    body: {
+      amount: Joi.number().min(1).required()
     },
     output: {
       '400-599': {

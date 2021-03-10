@@ -1,4 +1,5 @@
 import { createConnection } from 'typeorm'
+import { BalanceMutation } from './entities/BalanceMutation'
 import { Group } from './entities/Group'
 import { GroupCategory } from './entities/GroupCategory'
 import { Review } from './entities/Review'
@@ -22,7 +23,8 @@ export default async function initDB() {
       Group,
       Transaction,
       TransactionItem,
-      Review
+      Review,
+      BalanceMutation
     ]
   })
 }

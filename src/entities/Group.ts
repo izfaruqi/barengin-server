@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany, Index } from 'typeorm'
 import { GroupCategory } from './GroupCategory'
 import { Review } from './Review'
 import { User } from './User'
@@ -11,6 +11,7 @@ export class Group {
   @Column({
     default: ""
   })
+  @Index()
   name!: string
 
   @Column({
