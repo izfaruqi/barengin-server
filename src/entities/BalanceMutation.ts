@@ -30,6 +30,7 @@ export class BalanceMutation {
   @Column()
   createdAt!: Date
 
+  // TODO: The concept of "settled and held mutation" is terribly wrong. Should've made two different balances altogther.
   @Column({ nullable: true })
   settledAt!: Date
 }
