@@ -19,7 +19,8 @@ function hideIdFromTransactionItems(items: any[]): any {
 export async function insert(ctx: ParameterizedContext) {
   await getConnection().transaction(async trx => {
     const transaction = new Transaction()
-    transaction.buyer = new User(); transaction.buyer.id = ctx.state.user.id
+    const buyer = (await trx.getRepository(User).findOne({ where: { id: ctx.state.user.id }, relations: ["groupsJoined"] }))!
+    transaction.buyer = buyer
     let totalPrice = 0
     if(ctx.request.body.transactionType == TransactionType.TOPUP){
       transaction.transactionType = TransactionType.TOPUP
@@ -29,22 +30,45 @@ export async function insert(ctx: ParameterizedContext) {
       if(ctx.request.body.items == null || ctx.request.body.items.length < 1){
         throw badRequest("Must have at least 1 item.")
       }
-      transaction.items = await Promise.all(ctx.request.body.items.map(async (itemId: number) => {
-        const item = new TransactionItem()
-        const group = await trx.getRepository(Group).findOne({ where: { id: itemId }, relations: ["groupCategory", "owner"]})
+      transaction.items = await Promise.all(ctx.request.body.items.map(async (item: any) => {
+        const group = await trx.getRepository(Group).findOne({ where: { id: item.id }, relations: ["groupCategory", "owner"]})
+        const transactionItem = new TransactionItem()
+
         if(group == undefined){
-          throw notFound("Group with id " + itemId + " not found.")
+          throw notFound("Group with id " + item.id + " not found.")
         }
-        item.group = group!
-        item.seller = item.group.owner
-        item.groupCategory = item.group.groupCategory
-        item.price = item.groupCategory.price
-        item.name = item.group.name
-        item.categoryName = item.groupCategory.name
-        item.transaction = transaction
-        totalPrice += item.price
-        await trx.getRepository(TransactionItem).insert(item)
-        return item
+
+        // Check if user is already a member of the group or already has an active transaction for the group.
+        if(buyer.groupsJoined.map(group => group.id).includes(item.id)){
+          throw forbidden("User is already a member of the group " + group.name + " (" + item.id + ").")
+        }
+        const buyersUnsettledTransaction = await trx.getRepository(TransactionItem).createQueryBuilder("transactionItem")
+          .leftJoin("transactionItem.transaction", "transaction")
+          .leftJoinAndSelect("transactionItem.group", "group")
+          .andWhere("transaction.paidAt IS NULL")
+          .andWhere("transaction.paymentStatus <> :paymentStatus", { paymentStatus: PaymentStatus.CANCELLED })
+          .getMany()
+        if(buyersUnsettledTransaction.map(butItem => butItem.group.id).includes(item.id)){
+          throw forbidden("User already has an active transaction for the group " + group.name + " (" + item.id + ").")
+        }
+
+        transactionItem.group = group!
+        transactionItem.seller = transactionItem.group.owner
+        transactionItem.groupCategory = transactionItem.group.groupCategory
+        transactionItem.price = transactionItem.groupCategory.price
+        transactionItem.name = transactionItem.group.name
+        transactionItem.categoryName = transactionItem.groupCategory.name
+        transactionItem.transaction = transaction
+        
+        await trx.getRepository(Group).decrement({ id: transactionItem.group.id }, "slotsAvailable", item.slotsTaken)
+        await trx.getRepository(Group).increment({ id: transactionItem.group.id }, "slotsTaken", item.slotsTaken)
+        if((await trx.getRepository(Group).findOne({ where: { id: transactionItem.group.id }, select: ["slotsAvailable"] }))!.slotsAvailable < 0){
+          throw forbidden("Group does not have enough slots.")
+        }
+
+        totalPrice += (transactionItem.price * item.slotsTaken)
+        await trx.getRepository(TransactionItem).insert(transactionItem)
+        return transactionItem
       }))
     }
     transaction.totalPrice = totalPrice
@@ -138,8 +162,6 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       review.transactionItem = item
       await db.getRepository(Review).insert(review)
       await groupQuery.of(item.group).add(transactionDetails.buyer)
-      await db.getRepository(Group).decrement({ id: item.group.id }, "slotsAvailable", 1)
-      await db.getRepository(Group).increment({ id: item.group.id }, "slotsTaken", 1)
     }))
   }
 }
@@ -167,13 +189,19 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function cancelById(ctx: ParameterizedContext){
-  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { select: ["paymentStatus"] })
+  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group"], select: ["paymentStatus"] })
   if(transaction == null){
     throw notFound("Transaction not found.")
   }
-  if(transaction.paymentStatus == PaymentStatus.SETTLED){
-    throw forbidden("Can't cancel settled transaction.")
+  if(transaction.paymentStatus != PaymentStatus.PENDING){
+    throw forbidden("Can't cancel non-pending transaction.")
   }
+
+  await Promise.all(transaction.items.map(async item => {
+    await getConnection().getRepository(Group).increment({ id: item.group.id }, "slotsAvailable", item.slotsTaken)
+    await getConnection().getRepository(Group).decrement({ id: item.group.id }, "slotsTaken", item.slotsTaken)
+  }));
+
   const res = await getConnection().getRepository(Transaction).update(ctx.request.params.id, { paymentStatus: PaymentStatus.CANCELLED, midtransRedirect: undefined })
   await axios.post("https://api.sandbox.midtrans.com/v2/" + ctx.request.params.id + "/cancel", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }, headers: { "Accept": "application/json" }}).then(res => res.data)
   if(res == null){
