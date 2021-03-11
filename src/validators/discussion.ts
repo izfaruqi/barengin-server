@@ -13,3 +13,20 @@ export const getMessagesByGroupId: Config = {
     },
   }
 }
+
+export const sendMessageToGroupDiscussion: Config = {
+  validate: {
+    type: "json",
+    params: {
+      id: Joi.number().required()
+    },
+    body: {
+      content: Joi.string().min(1).required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}

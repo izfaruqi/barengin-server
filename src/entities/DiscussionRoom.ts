@@ -15,6 +15,7 @@ export class DiscussionRoom {
   @OneToMany(() => DiscussionMessage, discussionMessage => discussionMessage.room, { nullable: true })
   messages!: DiscussionMessage[]
 
-  @OneToOne(() => Group)
+  // For future use when discussion rooms are no longer exclusively tied to groups.
+  @OneToOne(() => Group, { nullable: true })
   group!: Group
 }
