@@ -16,7 +16,7 @@ export async function getMessagesByGroupId(ctx: ParameterizedContext){
     .leftJoin("discussionRoom.members", "members")
     .addSelect("members.id").addSelect("discussionRoom.id").getOne()
   if(group == null) throw notFound("Group not found.")
-  if(!group.discussionRoom.members.map(member => member.id).includes(ctx.state.user.id)) throw forbidden("You're not a member of this group.")
+  if(!group.discussionRoom.members.map(member => member.id).includes(ctx.state.user.id) && !ctx.state.user.isAdmin) throw forbidden("You're not a member of this group.")
 
   const messages = await getConnection().getRepository(DiscussionMessage).find({ where: { room: group.discussionRoom } })
   ctx.body = messages
