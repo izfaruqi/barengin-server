@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany, Index, OneToOne, JoinColumn } from 'typeorm'
 import { DiscussionRoom } from './DiscussionRoom'
 import { GroupCategory } from './GroupCategory'
+import { GroupMembership } from './GroupMembership'
 import { Review } from './Review'
 import { User } from './User'
 
@@ -45,6 +46,9 @@ export class Group {
   @ManyToMany(() => User, user => user.groupsJoined, { nullable: true })
   @JoinTable()
   members!: User[]
+  
+  @OneToMany(() => GroupMembership, groupMembership => groupMembership.group, { nullable: true })
+  memberships!: GroupMembership[]
 
   @OneToMany(() => Review, review => review.group, { nullable: true })
   reviews!: Review[]
