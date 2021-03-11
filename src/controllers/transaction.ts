@@ -212,10 +212,14 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function cancelById(ctx: ParameterizedContext){
-  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group"], select: ["paymentStatus"] })
+  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group", "buyer"], select: ["paymentStatus", "buyer"] })
+
   if(transaction == null){
     throw notFound("Transaction not found.")
   }
+  if(!ctx.state.user.isAdmin && ctx.state.user.id != transaction.buyer.id){
+    throw forbidden("You didn't own this transaction!")
+  } 
   if(transaction.paymentStatus != PaymentStatus.PENDING){
     throw forbidden("Can't cancel non-pending transaction.")
   }
