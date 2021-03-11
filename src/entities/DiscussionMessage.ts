@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { DiscussionRoom } from "./DiscussionRoom";
 import { User } from "./User";
 
@@ -22,5 +22,6 @@ export class DiscussionMessage {
   senderId!: number
   
   @Column()
+  @Index()
   sentAt!: Date
 }

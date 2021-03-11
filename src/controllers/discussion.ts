@@ -1,6 +1,6 @@
 import { forbidden, notFound } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
-import { getConnection } from "typeorm";
+import { Between, getConnection } from "typeorm";
 import { DiscussionMessage } from "../entities/DiscussionMessage";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
@@ -8,6 +8,7 @@ import { User } from "../entities/User";
 // There's no "getDiscussionRoomById" and "editDiscussionRoomById" because discussion rooms are so tightly
 // bound to groups that all the metadata needed is already available in the group.
 
+// TODO: Don't allow user to see messages that's sent before they're invited (probably requires rehauling the entire membership system :/).
 export async function getMessagesByGroupId(ctx: ParameterizedContext){
   // Might seperate this part into a function if it's used more than twice.
   const group = await getConnection().getRepository(Group).createQueryBuilder("group")
@@ -17,8 +18,9 @@ export async function getMessagesByGroupId(ctx: ParameterizedContext){
     .addSelect("members.id").addSelect("discussionRoom.id").getOne()
   if(group == null) throw notFound("Group not found.")
   if(!group.discussionRoom.members.map(member => member.id).includes(ctx.state.user.id) && !ctx.state.user.isAdmin) throw forbidden("You're not a member of this group.")
-
-  const messages = await getConnection().getRepository(DiscussionMessage).find({ where: { room: group.discussionRoom } })
+  const sinceDate = new Date(ctx.request.query.since as any)
+  const untilDate = new Date(ctx.request.query.until as any)
+  const messages = await getConnection().getRepository(DiscussionMessage).find({ where: { room: group.discussionRoom, sentAt: Between(sinceDate, untilDate) } })
   ctx.body = messages
 }
 
