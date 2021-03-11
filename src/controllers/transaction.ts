@@ -9,6 +9,7 @@ import axios from 'axios'
 import crypto from 'crypto'
 import { Review } from "../entities/Review";
 import { BalanceMutation, BalanceMutationStatus } from "../entities/BalanceMutation";
+import { DiscussionRoom } from "../entities/DiscussionRoom";
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -77,9 +78,10 @@ export async function insert(ctx: ParameterizedContext) {
     const savedTransaction = await trx.getRepository(Transaction).save(transaction)
 
     if(ctx.request.body.paymentMethod == PaymentMethod.MIDTRANS){
+      savedTransaction.midtransOrderId = Date.now().toString() + "-" +  savedTransaction.id
       const midtransData = await axios.post("https://app.sandbox.midtrans.com/snap/v1/transactions", {
         transaction_details: {
-          order_id: savedTransaction.id,
+          order_id: savedTransaction.midtransOrderId,
           gross_amount: savedTransaction.totalPrice
         }
       }, { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
@@ -87,7 +89,7 @@ export async function insert(ctx: ParameterizedContext) {
       savedTransaction.paymentMethod = PaymentMethod.MIDTRANS
       await trx.getRepository(Transaction).save(savedTransaction)
 
-      ctx.body = { id: savedTransaction.id, midtransRedirect: midtransData.redirect_url }
+      ctx.body = { id: savedTransaction.id, midtransOrderId: savedTransaction.midtransOrderId, midtransRedirect: midtransData.redirect_url }
     } else if(ctx.request.body.paymentMethod == PaymentMethod.BALANCE){
       if(ctx.request.body.transactionType == TransactionType.TOPUP){
         throw forbidden("Cant top up with balance!")
@@ -111,7 +113,7 @@ export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
     }
   }
   if(transactionData?.paymentStatus == PaymentStatus.PENDING){
-    const midtransData = await axios.get("https://api.sandbox.midtrans.com/v2/" + ctx.request.params.id + "/status", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
+    const midtransData = await axios.get("https://api.sandbox.midtrans.com/v2/" + transactionData.midtransOrderId + "/status", { timeout: 20000, auth: { username: process.env.MIDTRANS_SERVER_KEY || "", password: "" }}).then(res => res.data)
     if(midtransData.status_code == "404"){
       throw notFound("Transaction does not exist.")
     } else if(midtransData.status_code == "200"){
@@ -128,22 +130,26 @@ export async function midtransManualUpdateStatus(ctx: ParameterizedContext){
 }
 
 export async function midtransNotification(ctx: ParameterizedContext){
-  const { status_code, gross_amount, signature_key, order_id } = ctx.request.body
-  console.log("Midtrans notification: " + order_id)
-  const expectedHash = crypto.createHash('sha512').update(order_id + status_code + gross_amount + process.env.MIDTRANS_SERVER_KEY).digest("hex")
-  if(expectedHash == signature_key){
-    if(status_code == "200"){
-      if((await getConnection().getRepository(Transaction).findOne({ id: order_id }, { select: ["paymentStatus"] }))?.paymentStatus != PaymentStatus.SETTLED){
+  await getConnection().transaction(async trx => {
+    const { status_code, gross_amount, signature_key, order_id } = ctx.request.body
+    console.log("Midtrans notification: " + order_id)
+    const expectedHash = crypto.createHash('sha512').update(order_id + status_code + gross_amount + process.env.MIDTRANS_SERVER_KEY).digest("hex")
+    if(expectedHash == signature_key){
+      if(status_code == "200"){
+        const transaction = await getConnection().getRepository(Transaction).findOne({ midtransOrderId: order_id }, { select: ["paymentStatus", "id"] })
+        if(transaction == null) throw notFound("Transaction not found.")
+        if(transaction?.paymentStatus != PaymentStatus.SETTLED){
+          ctx.body = { status: PaymentStatus.SETTLED }
+        }
+        console.log("Midtrans settlement: " + order_id)
+        await getConnection().getRepository(Transaction).update(transaction.id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(ctx.request.body), midtransRedirect: undefined, paidAt: new Date(ctx.request.body.settlement_time) })
+        await settleTransaction(transaction.id, trx)
         ctx.body = { status: PaymentStatus.SETTLED }
       }
-      console.log("Midtrans settlement: " + order_id)
-      await getConnection().getRepository(Transaction).update(order_id, { paymentStatus: PaymentStatus.SETTLED, successPayload: JSON.stringify(ctx.request.body), midtransRedirect: undefined, paidAt: new Date(ctx.request.body.settlement_time) })
-      await getConnection().transaction(async trx => await settleTransaction(parseInt(order_id), trx))
-      ctx.body = { status: PaymentStatus.SETTLED }
+    } else {
+      throw forbidden("Signature key mismatch.")
     }
-  } else {
-    throw forbidden("Signature key mismatch.")
-  }
+  })
 }
 
 async function settleTransaction(transactionId: number, trxEntityManager?: EntityManager){
@@ -152,7 +158,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
   if(trxEntityManager != null){
     db = trxEntityManager
   }
-  const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller"] }))!
+  const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller", "items.group.discussionRoom"] }))!
   await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: transactionDetails.buyer.id }, createdAt: now, settledAt: now })
 
   if(transactionDetails.transactionType == TransactionType.TOPUP){
@@ -160,6 +166,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
+    const discussionRoomQuery = db.getRepository(DiscussionRoom).createQueryBuilder().relation("members")
     await Promise.all(transactionDetails.items.map(async item => {
       const review = new Review()
       review.owner = transactionDetails.buyer
@@ -168,6 +175,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       await db.getRepository(Review).insert(review)
       await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
       await groupQuery.of(item.group).add(transactionDetails.buyer)
+      await discussionRoomQuery.of(item.group.discussionRoom).add(transactionDetails.buyer)
     }))
   }
 }
@@ -206,10 +214,14 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function cancelById(ctx: ParameterizedContext){
-  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group"], select: ["paymentStatus"] })
+  const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group", "buyer"], select: ["paymentStatus", "buyer"] })
+
   if(transaction == null){
     throw notFound("Transaction not found.")
   }
+  if(!ctx.state.user.isAdmin && ctx.state.user.id != transaction.buyer.id){
+    throw forbidden("You didn't own this transaction!")
+  } 
   if(transaction.paymentStatus != PaymentStatus.PENDING){
     throw forbidden("Can't cancel non-pending transaction.")
   }

@@ -6,6 +6,7 @@ import { router as group } from './group'
 import { router as transaction } from './transaction'
 import { router as review } from './review'
 import { router as balanceMutation } from './balanceMutation'
+import { router as discussion } from './discussion'
 
 export const router = new Router()
 
@@ -16,3 +17,4 @@ router.use('/group', group.middleware())
 router.use('/transaction', transaction.middleware())
 router.use('/review', review.middleware())
 router.use('/balance-mutation', balanceMutation.middleware())
+router.use('/discussion', discussion.middleware())
