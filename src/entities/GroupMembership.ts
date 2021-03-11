@@ -8,14 +8,13 @@ export class GroupMembership {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @ManyToOne(() => Group)
+  @ManyToOne(() => Group, group => group.memberships)
   group!: Group
 
   @ManyToOne(() => User)
   member!: User
 
-  @OneToOne(() => GroupCredential)
-  @JoinColumn()
+  @OneToOne(() => GroupCredential, groupCredential => groupCredential.membership)
   credential!: GroupCredential
 
   @Column({

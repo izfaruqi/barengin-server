@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany, Index, OneToOne, JoinColumn } from 'typeorm'
 import { DiscussionRoom } from './DiscussionRoom'
 import { GroupCategory } from './GroupCategory'
+import { GroupCredential } from './GroupCredential'
 import { GroupMembership } from './GroupMembership'
 import { Review } from './Review'
 import { User } from './User'
@@ -31,11 +32,8 @@ export class Group {
   })
   rules!: string
 
-  @Column({
-    default: "",
-    select: false
-  })
-  credentials!: string
+  @OneToMany(() => GroupCredential, groupCredential => groupCredential.group, { nullable: false })
+  credentials!: GroupCredential[]
 
   @ManyToOne(() => GroupCategory, groupCategory => groupCategory.groups, { nullable: false })
   groupCategory!: GroupCategory

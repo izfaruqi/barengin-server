@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./Group";
 import { GroupMembership } from "./GroupMembership";
 
@@ -15,6 +15,7 @@ export class GroupCredential {
   })
   credential!: string
 
-  @OneToOne(() => GroupMembership, { nullable: true })
+  @OneToOne(() => GroupMembership, groupMembership => groupMembership.credential, { nullable: true })
+  @JoinColumn()
   membership!: GroupMembership
 }

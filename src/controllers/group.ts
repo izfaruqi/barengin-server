@@ -4,6 +4,7 @@ import { getConnection, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { DiscussionRoom } from "../entities/DiscussionRoom";
 import { Group } from "../entities/Group";
+import { GroupCredential } from "../entities/GroupCredential";
 import { User } from "../entities/User";
 
 export async function insert(ctx: ParameterizedContext) {
@@ -14,11 +15,15 @@ export async function insert(ctx: ParameterizedContext) {
       owner.id = ctx.state.user.id
       discussionRoom.members = [owner]
       trx.getRepository(DiscussionRoom).save(discussionRoom)
+      let credentials = []
+      for(let i = 0; i < ctx.request.body.slotsAvailable; i++){
+        credentials.push(await trx.getRepository(GroupCredential).save(new GroupCredential()))
+      }
       const res = await trx.getRepository(Group).save({ 
         name: ctx.request.body.name,
         slotsAvailable: ctx.request.body.slotsAvailable,
         rules: ctx.request.body.rules,
-        credentials: ctx.request.body.credentials,
+        credentials: credentials,
         groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } ,
         discussionRoom: discussionRoom
       })
@@ -133,23 +138,24 @@ export async function getById(ctx: ParameterizedContext){
 
 export async function getJoined(ctx: ParameterizedContext){
   ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user")
-    .leftJoinAndSelect("user.groupsJoined", "groupsJoined")
-    .leftJoin("groupsJoined.owner", "owner")
-    .leftJoin("groupsJoined.members", "members")
     .where("user.id = :id", { id: ctx.state.user.id })
-    .addSelect("groupsJoined.credentials")
+    .leftJoinAndSelect("user.groupMemberships", "userMemberships")
+    .leftJoinAndSelect("userMemberships.group", "groups")
+    .leftJoin("groups.owner", "owner")
+    .leftJoinAndSelect("groups.memberships", "groupMemberships")
+    .leftJoin("groupMemberships.member", "members")
     .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
     .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
-    .getOne())?.groupsJoined
+    .getOne())?.groupMemberships
 }
 
 export async function getOwned(ctx: ParameterizedContext){
   ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user")
+    .where("user.id = :id", { id: ctx.state.user.id })
     .leftJoinAndSelect("user.groupsOwned", "groupsOwned")
     .leftJoin("groupsOwned.owner", "owner")
-    .leftJoin("groupsOwned.members", "members")
-    .where("user.id = :id", { id: ctx.state.user.id })
-    .addSelect("groupsOwned.credentials")
+    .leftJoinAndSelect("groupsOwned.memberships", "groupMemberships")
+    .leftJoin("groupMemberships.member", "members")
     .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
     .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
     .getOne())?.groupsOwned

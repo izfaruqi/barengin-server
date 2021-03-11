@@ -10,6 +10,8 @@ import crypto from 'crypto'
 import { Review } from "../entities/Review";
 import { BalanceMutation, BalanceMutationStatus } from "../entities/BalanceMutation";
 import { DiscussionRoom } from "../entities/DiscussionRoom";
+import { GroupMembership } from "../entities/GroupMembership";
+import { GroupCredential } from "../entities/GroupCredential";
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -21,7 +23,7 @@ function hideIdFromTransactionItems(items: any[]): any {
 export async function insert(ctx: ParameterizedContext) {
   await getConnection().transaction(async trx => {
     const transaction = new Transaction()
-    const buyer = (await trx.getRepository(User).findOne({ where: { id: ctx.state.user.id }, relations: ["groupsJoined"] }))!
+    const buyer = (await trx.getRepository(User).findOne({ where: { id: ctx.state.user.id }, relations: ["groupMemberships", "groupMemberships.group"] }))!
     transaction.buyer = buyer
     let totalPrice = 0
     if(ctx.request.body.transactionType == TransactionType.TOPUP){
@@ -41,7 +43,7 @@ export async function insert(ctx: ParameterizedContext) {
         }
 
         // Check if user is already a member of the group or already has an active transaction for the group.
-        if(buyer.groupsJoined.map(group => group.id).includes(item.id)){
+        if(buyer.groupMemberships.map(groupMembership => groupMembership.group.id).includes(item.id)){
           throw forbidden("User is already a member of the group " + group.name + " (" + item.id + ").")
         }
         const buyersUnsettledTransaction = await trx.getRepository(TransactionItem).createQueryBuilder("transactionItem")
@@ -165,16 +167,26 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
     await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now, settledAt: now })
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
-    const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
+    const groupQuery = db.getRepository(Group).createQueryBuilder().relation("memberships")
     const discussionRoomQuery = db.getRepository(DiscussionRoom).createQueryBuilder().relation("members")
+
     await Promise.all(transactionDetails.items.map(async item => {
+      const membership = new GroupMembership()
+      membership.group = item.group
+      membership.member = transactionDetails.buyer
+      membership.credential = (await db.getRepository(GroupCredential).findOne({ where: { membership: null, group: item.group }}))! 
+      membership.joinedAt = new Date()
+      membership.expiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000))
+      db.getRepository(GroupMembership).save(membership)
+
       const review = new Review()
       review.owner = transactionDetails.buyer
       review.group = item.group
       review.transactionItem = item
+
       await db.getRepository(Review).insert(review)
       await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
-      await groupQuery.of(item.group).add(transactionDetails.buyer)
+      await groupQuery.of(item.group).add(membership)
       await discussionRoomQuery.of(item.group.discussionRoom).add(transactionDetails.buyer)
     }))
   }
