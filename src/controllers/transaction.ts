@@ -165,6 +165,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       review.owner = transactionDetails.buyer
       review.group = item.group
       review.transactionItem = item
+      
       await db.getRepository(Review).insert(review)
       await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
       await groupQuery.of(item.group).add(transactionDetails.buyer)

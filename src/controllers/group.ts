@@ -2,19 +2,30 @@ import { forbidden, notFound, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
 import { getConnection, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
+import { DiscussionRoom } from "../entities/DiscussionRoom";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
 
 export async function insert(ctx: ParameterizedContext) {
   try {
-    const res = await getConnection().getRepository(Group).insert({ 
-      name: ctx.request.body.name,
-      slotsAvailable: ctx.request.body.slotsAvailable,
-      rules: ctx.request.body.rules,
-      credentials: ctx.request.body.credentials,
-      groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } 
+    await getConnection().transaction(async trx => {
+      const discussionRoom = new DiscussionRoom()
+      const owner = new User()
+      owner.id = ctx.state.user.id
+      discussionRoom.members = [owner]
+      trx.getRepository(DiscussionRoom).save(discussionRoom)
+      const res = await trx.getRepository(Group).save({ 
+        name: ctx.request.body.name,
+        slotsAvailable: ctx.request.body.slotsAvailable,
+        rules: ctx.request.body.rules,
+        credentials: ctx.request.body.credentials,
+        groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } ,
+        discussionRoom: discussionRoom
+      })
+      discussionRoom.group = res
+      trx.getRepository(DiscussionRoom).save(discussionRoom)
+      ctx.body = { id: res.id }
     })
-    ctx.body = { id: res.identifiers[0].id }
   } catch (err) {
     if(err.code?.startsWith("ER_NO_REFERENCED_ROW")){ // Foreign key constraint fail (invalid user/group category)
       throw forbidden("Invalid group category or owner id.")

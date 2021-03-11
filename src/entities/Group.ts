@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany, Index, OneToOne } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, ManyToOne, ManyToMany, JoinTable, OneToMany, Index, OneToOne, JoinColumn } from 'typeorm'
 import { DiscussionRoom } from './DiscussionRoom'
 import { GroupCategory } from './GroupCategory'
 import { Review } from './Review'
@@ -50,6 +50,7 @@ export class Group {
   reviews!: Review[]
 
   @OneToOne(() => DiscussionRoom)
+  @JoinColumn()
   discussionRoom!: DiscussionRoom
 
   @DeleteDateColumn({

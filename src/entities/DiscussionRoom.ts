@@ -1,4 +1,4 @@
-import { Entity, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { DiscussionMessage } from "./DiscussionMessage";
 import { Group } from "./Group";
 import { User } from "./User";
@@ -9,6 +9,7 @@ export class DiscussionRoom {
   id!: number
 
   @ManyToMany(() => User)
+  @JoinTable()
   members!: User[]
 
   @OneToMany(() => DiscussionMessage, discussionMessage => discussionMessage.room, { nullable: true })

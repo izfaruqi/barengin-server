@@ -1,5 +1,7 @@
 import { createConnection } from 'typeorm'
 import { BalanceMutation } from './entities/BalanceMutation'
+import { DiscussionMessage } from './entities/DiscussionMessage'
+import { DiscussionRoom } from './entities/DiscussionRoom'
 import { Group } from './entities/Group'
 import { GroupCategory } from './entities/GroupCategory'
 import { Review } from './entities/Review'
@@ -24,7 +26,9 @@ export default async function initDB() {
       Transaction,
       TransactionItem,
       Review,
-      BalanceMutation
+      BalanceMutation,
+      DiscussionMessage,
+      DiscussionRoom
     ]
   })
 }
