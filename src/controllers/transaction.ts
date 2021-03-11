@@ -9,6 +9,7 @@ import axios from 'axios'
 import crypto from 'crypto'
 import { Review } from "../entities/Review";
 import { BalanceMutation, BalanceMutationStatus } from "../entities/BalanceMutation";
+import { DiscussionRoom } from "../entities/DiscussionRoom";
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -157,7 +158,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
   if(trxEntityManager != null){
     db = trxEntityManager
   }
-  const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller"] }))!
+  const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller", "items.group.discussionRoom"] }))!
   await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: transactionDetails.buyer.id }, createdAt: now, settledAt: now })
 
   if(transactionDetails.transactionType == TransactionType.TOPUP){
@@ -165,15 +166,16 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("members")
+    const discussionRoomQuery = db.getRepository(DiscussionRoom).createQueryBuilder().relation("members")
     await Promise.all(transactionDetails.items.map(async item => {
       const review = new Review()
       review.owner = transactionDetails.buyer
       review.group = item.group
       review.transactionItem = item
-      
       await db.getRepository(Review).insert(review)
       await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
       await groupQuery.of(item.group).add(transactionDetails.buyer)
+      await discussionRoomQuery.of(item.group.discussionRoom).add(transactionDetails.buyer)
     }))
   }
 }
