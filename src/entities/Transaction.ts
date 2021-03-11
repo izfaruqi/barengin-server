@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TransactionItem } from "./TransactionItem";
 import { User } from "./User";
 
@@ -59,6 +59,12 @@ export class Transaction {
     nullable: true
   })
   midtransRedirect!: string
+
+  @Column({
+    nullable: true
+  })
+  @Index()
+  midtransOrderId!: string
 
   @Column({
     nullable: true,
