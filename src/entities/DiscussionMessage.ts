@@ -19,5 +19,8 @@ export class DiscussionMessage {
   sender!: User
 
   @Column()
+  senderId!: number
+  
+  @Column()
   sentAt!: Date
 }
