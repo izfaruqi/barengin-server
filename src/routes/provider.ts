@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
-import { getAll, insert } from '../controllers/provider'
-import { getAll as getAllValidator, insert as insertValidator } from '../validators/provider'
+import { deleteById, editById, getAll, insert } from '../controllers/provider'
+import { getAll as getAllValidator, insert as insertValidator, editById as editByIdValidator, deleteById as deleteByIdValidator } from '../validators/provider'
 import isAdmin from '../middlewares/isAdmin'
 
 export const router = Router()
@@ -18,6 +18,18 @@ const routes: Spec[] = [
     path: "/",
     validate: insertValidator.validate,
     handler: [jwt, isAdmin, insert]
+  },
+  {
+    method: "POST",
+    path: "/:id",
+    validate: editByIdValidator.validate,
+    handler: [jwt, isAdmin, editById]
+  },
+  {
+    method: "DELETE",
+    path: "/:id",
+    validate: deleteByIdValidator.validate,
+    handler: [jwt, isAdmin, deleteById]
   }
 ]
 

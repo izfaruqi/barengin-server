@@ -15,8 +15,38 @@ export const insert: Config = {
   }
 }
 
+export const editById: Config = {
+  validate: {
+    type: "json",
+    params: {
+      id: Joi.number().required()
+    },
+    body: {
+      name: Joi.string().trim().min(1).required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getAll: Config = {
   validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const deleteById: Config = {
+  validate: {
+    params: {
+      id: Joi.number().required()
+    },
     output: {
       '400-599': {
         body: errorResponseValidator

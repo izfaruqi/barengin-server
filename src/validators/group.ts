@@ -103,10 +103,7 @@ export const editById: Config = {
     },
     body: {
       name: group.name,
-      categoryId: group.categoryId,
-      slotsAvailable: group.slotsAvailable,
-      rules: group.rules,
-      credentials: group.credentials
+      rules: group.rules
     },
     output: {
       '400-599': {
