@@ -232,6 +232,15 @@ export async function getCurrent(ctx: ParameterizedContext){
   })
 }
 
+export async function getAllSales(ctx: ParameterizedContext){
+  const res = await getConnection().getRepository(TransactionItem).find({ where: { seller: { id: ctx.state.user.id } }, relations: ["group"], select: ["id", "group", "slotsTaken", "price", "name", "categoryName", "relationToOwner", "createdAt"]})
+  if(res == null){
+    throw notFound("Sale not found.")
+  }
+
+  ctx.body = res
+}
+
 export async function cancelById(ctx: ParameterizedContext){
   const transaction = await getConnection().getRepository(Transaction).findOne(ctx.request.params.id, { relations: ["items", "items.group", "buyer"], select: ["paymentStatus", "buyer"] })
 

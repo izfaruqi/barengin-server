@@ -1,8 +1,8 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
 import isAdmin from '../middlewares/isAdmin'
-import { insert, getById, cancelById, getCurrent, midtransManualUpdateStatus, midtransNotification, withdrawBalance } from '../controllers/transaction'
-import { insert as insertValidator, getById as getByIdValidator, cancelById as cancelByIdValidator, getCurrent as getCurrentValidator, midtransManualUpdateStatus as midtransManualUpdateStatusValidator, midtransNotification as midtransNotificationValidator, withdrawBalance as withdrawBalanceValidator } from '../validators/transaction'
+import { insert, getById, cancelById, getCurrent, midtransManualUpdateStatus, midtransNotification, withdrawBalance, getAllSales } from '../controllers/transaction'
+import { insert as insertValidator, getById as getByIdValidator, cancelById as cancelByIdValidator, getCurrent as getCurrentValidator, midtransManualUpdateStatus as midtransManualUpdateStatusValidator, midtransNotification as midtransNotificationValidator, withdrawBalance as withdrawBalanceValidator, getAllSales as getAllSalesValidator } from '../validators/transaction'
 
 export const router = Router()
 
@@ -18,6 +18,12 @@ const routes: Spec[] = [
     path: "/",
     validate: getCurrentValidator.validate,
     handler: [jwt, getCurrent]
+  },
+  {
+    method: "GET",
+    path: "/sale",
+    validate: getAllSalesValidator.validate,
+    handler: [jwt, getAllSales]
   },
   {
     method: "GET",

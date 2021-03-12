@@ -64,6 +64,16 @@ export const getCurrent: Config = {
   }
 }
 
+export const getAllSales: Config = {
+  validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getById: Config = {
   validate: {
     params: {

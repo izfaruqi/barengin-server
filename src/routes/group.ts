@@ -52,7 +52,7 @@ const routes: Spec[] = [
   },
   { // TODO: Rename this route.
     method: "GET",
-    path: "/:categoryId/search",
+    path: "/group-category/:categoryId/search",
     validate: searchValidator.validate,
     handler: [jwt, search]
   },
