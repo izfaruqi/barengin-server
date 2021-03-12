@@ -32,7 +32,7 @@ export class Group {
   })
   rules!: string
 
-  @OneToMany(() => GroupCredential, groupCredential => groupCredential.group, { nullable: false })
+  @OneToMany(() => GroupCredential, groupCredential => groupCredential.group, { nullable: true })
   credentials!: GroupCredential[]
 
   @ManyToOne(() => GroupCategory, groupCategory => groupCategory.groups, { nullable: false })
@@ -51,7 +51,7 @@ export class Group {
   @OneToMany(() => Review, review => review.group, { nullable: true })
   reviews!: Review[]
 
-  @OneToOne(() => DiscussionRoom)
+  @OneToOne(() => DiscussionRoom, { nullable: true })
   @JoinColumn()
   discussionRoom!: DiscussionRoom
 

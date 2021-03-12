@@ -11,7 +11,8 @@ export class GroupCredential {
   group!: Group
 
   @Column({
-    type: "text"
+    type: "text",
+    nullable: true
   })
   credential!: string
 

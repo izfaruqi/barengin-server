@@ -23,12 +23,10 @@ export async function insert(ctx: ParameterizedContext) {
         name: ctx.request.body.name,
         slotsAvailable: ctx.request.body.slotsAvailable,
         rules: ctx.request.body.rules,
-        credentials: credentials,
         groupCategory: { id: ctx.request.body.categoryId }, owner: { id: ctx.state.user.id } ,
-        discussionRoom: discussionRoom
-      })
-      discussionRoom.group = res
-      trx.getRepository(DiscussionRoom).save(discussionRoom)
+        discussionRoom: discussionRoom,
+        credentials: credentials
+      })      
       ctx.body = { id: res.id }
     })
   } catch (err) {
