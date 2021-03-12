@@ -54,4 +54,10 @@ export class TransactionItem {
 
   @CreateDateColumn({ select: false })
   createdAt!: Date
+
+  @Column({ nullable: true })
+  refundCutoffAt!: Date
+
+  @Column({ nullable: true })
+  refundedAt!: Date
 }

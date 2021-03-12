@@ -1,8 +1,8 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
 import isAdmin from '../middlewares/isAdmin'
-import { insert, getById, cancelById, getCurrent, midtransManualUpdateStatus, midtransNotification, withdrawBalance, getAllSales } from '../controllers/transaction'
-import { insert as insertValidator, getById as getByIdValidator, cancelById as cancelByIdValidator, getCurrent as getCurrentValidator, midtransManualUpdateStatus as midtransManualUpdateStatusValidator, midtransNotification as midtransNotificationValidator, withdrawBalance as withdrawBalanceValidator, getAllSales as getAllSalesValidator } from '../validators/transaction'
+import { insert, getById, cancelById, getCurrent, midtransManualUpdateStatus, midtransNotification, withdrawBalance, getAllSales, refundTransactionItem } from '../controllers/transaction'
+import { insert as insertValidator, getById as getByIdValidator, cancelById as cancelByIdValidator, getCurrent as getCurrentValidator, midtransManualUpdateStatus as midtransManualUpdateStatusValidator, midtransNotification as midtransNotificationValidator, withdrawBalance as withdrawBalanceValidator, getAllSales as getAllSalesValidator, refundTransactionItem as refundTransactionItemValidator } from '../validators/transaction'
 
 export const router = Router()
 
@@ -36,6 +36,12 @@ const routes: Spec[] = [
     path: "/:id/cancel",
     validate: cancelByIdValidator.validate,
     handler: [jwt, cancelById]
+  },
+  {
+    method: "POST",
+    path: "/sale/:id/refund",
+    validate: refundTransactionItemValidator.validate,
+    handler: [jwt, isAdmin, refundTransactionItem]
   },
   {
     method: "GET",

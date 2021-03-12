@@ -100,6 +100,19 @@ export const cancelById: Config = {
   }
 }
 
+export const refundTransactionItem: Config = {
+  validate: {
+    params: {
+      id: Joi.number().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const midtransManualUpdateStatus: Config = {
   validate: {
     params: {

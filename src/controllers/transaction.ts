@@ -1,6 +1,6 @@
 import { badRequest, forbidden, notFound, paymentRequired, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
-import { Connection, EntityManager, getConnection } from "typeorm";
+import { Connection, EntityManager, getConnection, MoreThan } from "typeorm";
 import { Group } from "../entities/Group";
 import { TransactionItem } from "../entities/TransactionItem";
 import { PaymentMethod, PaymentStatus, Transaction, TransactionType } from "../entities/Transaction";
@@ -12,6 +12,7 @@ import { BalanceMutation, BalanceMutationStatus } from "../entities/BalanceMutat
 import { DiscussionRoom } from "../entities/DiscussionRoom";
 import { GroupMembership } from "../entities/GroupMembership";
 import { GroupCredential } from "../entities/GroupCredential";
+import { revokeMembership } from "./group";
 
 function hideIdFromTransactionItems(items: any[]): any {
   return items.map(item => {
@@ -19,6 +20,8 @@ function hideIdFromTransactionItems(items: any[]): any {
     return item
   })
 }
+
+const refuncCutoffPeriod = 25 * 24 * 60 * 60 * 1000
 
 export async function insert(ctx: ParameterizedContext) {
   await getConnection().transaction(async trx => {
@@ -103,7 +106,7 @@ export async function insert(ctx: ParameterizedContext) {
         throw paymentRequired("Insufficient balance.")
       }
       const now = new Date
-      await trx.getRepository(BalanceMutation).insert({ mutation: totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: buyer, createdAt: now, settledAt: now })
+      await trx.getRepository(BalanceMutation).insert({ mutation: totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: buyer, createdAt: now })
 
       await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
       await settleTransaction(savedTransaction.id, trx)
@@ -168,13 +171,15 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
   const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller", "items.group.discussionRoom"] }))!
 
   if(transactionDetails.transactionType == TransactionType.TOPUP){
-    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, owner: transactionDetails.buyer, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now, settledAt: now })
+    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, owner: transactionDetails.buyer, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now })
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("memberships")
     const discussionRoomQuery = db.getRepository(DiscussionRoom).createQueryBuilder().relation("members")
 
     await Promise.all(transactionDetails.items.map(async item => {
+      await db.getRepository(TransactionItem).update(item.id, { refundCutoffAt: new Date(Date.now() + refuncCutoffPeriod) })
+
       const membership = new GroupMembership()
       membership.group = item.group
       membership.member = transactionDetails.buyer
@@ -191,7 +196,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       review.transactionItem = item
 
       await db.getRepository(Review).insert(review)
-      await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
+      await db.getRepository(BalanceMutation).insert({ mutation: item.price * item.slotsTaken, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
       await db.getRepository(User).increment({ id: item.seller.id }, "balanceHeld", item.price)
       await groupQuery.of(item.group).add(membership)
       await discussionRoomQuery.of(item.group.discussionRoom).add(transactionDetails.buyer)
@@ -233,12 +238,27 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function getAllSales(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(TransactionItem).find({ where: { seller: { id: ctx.state.user.id } }, relations: ["group"], select: ["id", "group", "slotsTaken", "price", "name", "categoryName", "relationToOwner", "createdAt"]})
-  if(res == null){
-    throw notFound("Sale not found.")
-  }
+  const res = await getConnection().getRepository(TransactionItem).find({ where: { seller: { id: ctx.state.user.id } }, relations: ["group"], select: ["id", "group", "slotsTaken", "price", "name", "categoryName", "relationToOwner", "createdAt", "refundCutoffAt", "refundedAt"]})
 
   ctx.body = res
+}
+
+export async function refundTransactionItem(ctx: ParameterizedContext){
+  const now = new Date()
+  const transactionItem = await getConnection().getRepository(TransactionItem).findOne({ where: { id: ctx.request.params.id }, relations: ["group", "seller", "transaction", "transaction.buyer"]})
+  if(transactionItem == null) throw notFound("Transaction item not found.")
+  if(transactionItem.refundCutoffAt.getTime() <= Date.now()) throw forbidden("Transaction item is past refund cutoff date.")
+  if(transactionItem.refundedAt != null) throw forbidden("Transaction item is already refunded.")
+
+  await getConnection().transaction(async trx => {
+    await revokeMembership(transactionItem.transaction.buyer.id, transactionItem.group.id, trx)
+    await trx.getRepository(BalanceMutation).insert({ mutation: transactionItem.price * transactionItem.slotsTaken * -1, mutationStatus: BalanceMutationStatus.HELD, owner: transactionItem.seller, createdAt: now })
+    await trx.getRepository(BalanceMutation).insert({ mutation: transactionItem.price * transactionItem.slotsTaken, mutationStatus: BalanceMutationStatus.SETTLED, owner: transactionItem.transaction.buyer, createdAt: now })
+    await trx.getRepository(User).decrement({ id: transactionItem.seller.id }, "balanceHeld", transactionItem.price * transactionItem.slotsTaken)
+    await trx.getRepository(User).increment({ id: transactionItem.transaction.buyer.id }, "balance", transactionItem.price * transactionItem.slotsTaken)
+    await trx.getRepository(TransactionItem).update(transactionItem.id, { refundedAt: now })
+  })
+  ctx.body = { success: true }
 }
 
 export async function cancelById(ctx: ParameterizedContext){

@@ -1,6 +1,6 @@
 import { forbidden, notFound, unauthorized } from "@hapi/boom";
 import { ParameterizedContext } from "koa";
-import { getConnection, SelectQueryBuilder } from "typeorm";
+import { EntityManager, getConnection, SelectQueryBuilder } from "typeorm";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { DiscussionRoom } from "../entities/DiscussionRoom";
 import { Group } from "../entities/Group";
@@ -101,8 +101,9 @@ export async function getAllByCategory(ctx: ParameterizedContext) {
 
 async function getByIdFull(ctx: ParameterizedContext){
   const group = await safeGetGroupQuery(true, true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
-  if(!group){
-    notFound("Group not found")
+  console.log(group)
+  if(group == null){
+    throw notFound("Group not found")
   }
   if(!ctx.state.user.isAdmin && group?.owner.id != ctx.state.user.id){
     unauthorized("Not enough privilege.")
@@ -113,7 +114,7 @@ async function getByIdFull(ctx: ParameterizedContext){
 
 async function getByIdNonFull(ctx: ParameterizedContext) {
   const group = await safeGetGroupQuery(false, true).where("group.id = :id", { id: ctx.request.params.id }).getOne()
-  if(!group){
+  if(group == null){
     throw notFound("Group not found.")
   }
   group.reviews = group.reviews.map((review: any) => {
@@ -151,7 +152,7 @@ export async function getJoined(ctx: ParameterizedContext){
 }
 
 export async function getOwned(ctx: ParameterizedContext){
-  ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user")
+  ctx.body = (await getConnection().getRepository(User).createQueryBuilder("user").withDeleted()
     .where("user.id = :id", { id: ctx.state.user.id })
     .leftJoinAndSelect("user.groupsOwned", "groupsOwned")
     .leftJoin("groupsOwned.owner", "owner")
@@ -159,6 +160,7 @@ export async function getOwned(ctx: ParameterizedContext){
     .leftJoin("groupMemberships.member", "members")
     .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
     .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
+    .addSelect("groupsOwned.deletedAt")
     .getOne())?.groupsOwned
 }
 
@@ -168,7 +170,7 @@ export async function getCredentialsByGroup(ctx: ParameterizedContext){
     .leftJoin("credential.membership", "membership").leftJoin("membership.member", "member")
     .where("group.id = :groupId", { groupId: ctx.request.params.id }).andWhere("(member.id = :userId OR owner.id = :userId)", { userId: ctx.state.user.id })
     .getMany()
-  if(credentials?.length == 0) throw forbidden("You're not a member of this group.")
+  if(credentials?.length == 0) throw forbidden("You're not a member of this group or the group has been deleted.")
   ctx.body = credentials
 }
 
@@ -189,18 +191,20 @@ export async function search(ctx: ParameterizedContext){
     .getMany()
 }
 
-export async function revokeMembership(ctx: ParameterizedContext){
+export async function revokeMembershipEndpoint(ctx: ParameterizedContext){
   const userId = parseInt(ctx.request.params.userId)
   const groupId = parseInt(ctx.request.params.groupId)
+  await getConnection().transaction(async trx => await revokeMembership(userId, groupId, trx))
+  ctx.body = { success: true }
+}
+
+export async function revokeMembership(userId: number, groupId: number, trx: EntityManager){
   const groupMembership = await getConnection().getRepository(GroupMembership).findOne({ where: { group: { id: groupId }, member: { id: userId } }, relations: ["group", "group.discussionRoom"] } )
   if(groupMembership?.group == null) throw notFound("Group membership not found.")
-  await getConnection().transaction(async trx => {
-    await trx.getRepository(DiscussionRoom).createQueryBuilder().relation("members").of(groupMembership.group.discussionRoom).remove(userId)
-    await trx.getRepository(GroupMembership).remove(groupMembership)
-    await trx.getRepository(Group).increment({ id: groupMembership.group.id }, "slotsAvailable", groupMembership.slotsTaken)
-    await trx.getRepository(Group).decrement({ id: groupMembership.group.id }, "slotsTaken", groupMembership.slotsTaken)
-  })
-  ctx.body = { success: true }
+  await trx.getRepository(DiscussionRoom).createQueryBuilder().relation("members").of(groupMembership.group.discussionRoom).remove(userId)
+  await trx.getRepository(GroupMembership).remove(groupMembership)
+  await trx.getRepository(Group).increment({ id: groupMembership.group.id }, "slotsAvailable", groupMembership.slotsTaken)
+  await trx.getRepository(Group).decrement({ id: groupMembership.group.id }, "slotsTaken", groupMembership.slotsTaken)
 }
 
 export async function deleteById(ctx: ParameterizedContext){
