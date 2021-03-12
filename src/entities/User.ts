@@ -66,6 +66,11 @@ export class User {
   })
   balance!: number
 
+  @Column({
+    default: 0
+  })
+  balanceHeld!: number
+
   @OneToMany(() => Group, group => group.owner, { nullable: true })
   groupsOwned!: Group[]
 

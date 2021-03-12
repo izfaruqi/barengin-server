@@ -64,6 +64,7 @@ export async function insert(ctx: ParameterizedContext) {
         transactionItem.categoryName = transactionItem.groupCategory.name
         transactionItem.transaction = transaction
         transactionItem.relationToOwner = item.relationToOwner
+        transactionItem.slotsTaken = item.slotsTaken
         
         await trx.getRepository(Group).decrement({ id: transactionItem.group.id }, "slotsAvailable", item.slotsTaken)
         await trx.getRepository(Group).increment({ id: transactionItem.group.id }, "slotsTaken", item.slotsTaken)
@@ -177,7 +178,8 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       const membership = new GroupMembership()
       membership.group = item.group
       membership.member = transactionDetails.buyer
-      membership.credential = (await db.getRepository(GroupCredential).findOne({ where: { membership: null, group: item.group }}))! 
+      membership.slotsTaken = item.slotsTaken
+      membership.credentials = (await db.getRepository(GroupCredential).find({ where: { membership: null, group: item.group }, take: item.slotsTaken }))! 
       membership.joinedAt = new Date()
       membership.expiresAt = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
       membership.relationToOwner = item.relationToOwner
@@ -190,6 +192,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
 
       await db.getRepository(Review).insert(review)
       await db.getRepository(BalanceMutation).insert({ mutation: item.price, mutationStatus: BalanceMutationStatus.HELD, owner: { id: item.seller.id }, createdAt: now })
+      await db.getRepository(User).increment({ id: item.seller.id }, "balanceHeld", item.price)
       await groupQuery.of(item.group).add(membership)
       await discussionRoomQuery.of(item.group.discussionRoom).add(transactionDetails.buyer)
     }))

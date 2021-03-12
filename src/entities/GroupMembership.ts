@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./Group";
 import { GroupCredential } from "./GroupCredential";
 import { User } from "./User";
@@ -14,13 +14,18 @@ export class GroupMembership {
   @ManyToOne(() => User)
   member!: User
 
-  @OneToOne(() => GroupCredential, groupCredential => groupCredential.membership)
-  credential!: GroupCredential
+  @OneToMany(() => GroupCredential, groupCredential => groupCredential.membership)
+  credentials!: GroupCredential[]
 
   @Column({
     default: ""
   })
   relationToOwner!: string
+
+  @Column({
+    default: 0
+  })
+  slotsTaken!: number
 
   @Column()
   joinedAt!: Date

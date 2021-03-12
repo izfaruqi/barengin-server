@@ -176,6 +176,8 @@ export async function revokeMembership(ctx: ParameterizedContext){
   await getConnection().transaction(async trx => {
     await trx.getRepository(DiscussionRoom).createQueryBuilder().relation("members").of(groupMembership.group.discussionRoom).remove(userId)
     await trx.getRepository(GroupMembership).remove(groupMembership)
+    await trx.getRepository(Group).increment({ id: groupMembership.group.id }, "slotsAvailable", groupMembership.slotsTaken)
+    await trx.getRepository(Group).decrement({ id: groupMembership.group.id }, "slotsTaken", groupMembership.slotsTaken)
   })
 }
 
