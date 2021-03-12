@@ -145,6 +145,23 @@ export const getCredentialsByGroup: Config = {
   }
 }
 
+export const editCredentialById: Config = {
+  validate: {
+    type: "json",
+    params: {
+      id: Joi.number().required()
+    },
+    body: {
+      credential: Joi.string().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const revokeMembership: Config = {
   validate: {
     params: {

@@ -172,6 +172,15 @@ export async function getCredentialsByGroup(ctx: ParameterizedContext){
   ctx.body = credentials
 }
 
+export async function editCredentialById(ctx: ParameterizedContext){
+  const credential = await getConnection().getRepository(GroupCredential).createQueryBuilder("credential")
+    .leftJoin("credential.group", "group").leftJoinAndSelect("group.owner", "owner").andWhere("owner.id = :ownerId", { ownerId: ctx.state.user.id })
+    .andWhere("credential.id = :credentialId", { credentialId: ctx.request.params.id }).getOne()
+  if(credential == null) throw forbidden("Credential not found or you dont own the credential.")
+  await getConnection().getRepository(GroupCredential).update(ctx.request.params.id, { credential: ctx.request.body.credential })
+  ctx.body = { credential: ctx.request.body.credential }
+}
+
 export async function search(ctx: ParameterizedContext){
   // Full-text search is not used because of weird bugs.
   ctx.body = await safeGetGroupQuery()
@@ -191,6 +200,7 @@ export async function revokeMembership(ctx: ParameterizedContext){
     await trx.getRepository(Group).increment({ id: groupMembership.group.id }, "slotsAvailable", groupMembership.slotsTaken)
     await trx.getRepository(Group).decrement({ id: groupMembership.group.id }, "slotsTaken", groupMembership.slotsTaken)
   })
+  ctx.body = { success: true }
 }
 
 export async function deleteById(ctx: ParameterizedContext){
