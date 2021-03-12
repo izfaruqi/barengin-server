@@ -132,6 +132,19 @@ export const search: Config = {
   }
 }
 
+export const getCredentialsByGroup: Config = {
+  validate: {
+    params: {
+      id: group.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const revokeMembership: Config = {
   validate: {
     params: {

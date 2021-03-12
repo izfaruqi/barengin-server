@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
-import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned, search, revokeMembership } from '../controllers/group'
-import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator, search as searchValidator, revokeMembership as revokeMembershipValidator } from '../validators/group'
+import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned, search, revokeMembership, getCredentialsByGroup } from '../controllers/group'
+import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator, search as searchValidator, revokeMembership as revokeMembershipValidator, getCredentialsByGroup as getCredentialsByGroupValidator } from '../validators/group'
 import isSeller from '../middlewares/isSeller'
 import isAdmin from '../middlewares/isAdmin'
 
@@ -50,11 +50,17 @@ const routes: Spec[] = [
     validate: editByIdValidator.validate,
     handler: [jwt, editById]
   },
-  {
+  { // TODO: Rename this route.
     method: "GET",
     path: "/:categoryId/search",
     validate: searchValidator.validate,
     handler: [jwt, search]
+  },
+  {
+    method: "GET",
+    path: "/:id/credentials",
+    validate: getCredentialsByGroupValidator.validate,
+    handler: [jwt, getCredentialsByGroup]
   },
   {
     method: "DELETE",

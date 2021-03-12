@@ -67,12 +67,14 @@ export async function editById(ctx: ParameterizedContext) {
 function safeGetGroupQuery(includeMembers: boolean = false, includeReviews: boolean = false): SelectQueryBuilder<Group>{
   const query = getConnection().getRepository(Group).createQueryBuilder("group")
     .leftJoin("group.owner", "owner")
-    .leftJoin("group.members", "members")
+    .leftJoin("group.memberships", "memberships")
     .leftJoinAndSelect("group.groupCategory", "groupCategory")
     // Users are limited to these 4 columns to save space.
     .addSelect("owner.firstName").addSelect("owner.lastName").addSelect("owner.id")
   if(includeMembers){
-    query.addSelect("members.firstName").addSelect("members.lastName").addSelect("members.id")
+    query.addSelect("memberships.id").addSelect("memberships.joinedAt")
+      .leftJoin("memberships.member", "member")
+      .addSelect("member.firstName").addSelect("member.lastName").addSelect("member.id")
   }
   if(includeReviews){
     query
@@ -158,6 +160,16 @@ export async function getOwned(ctx: ParameterizedContext){
     .addSelect("members.id").addSelect("members.firstName").addSelect("members.lastName")
     .addSelect("owner.id").addSelect("owner.firstName").addSelect("owner.lastName")
     .getOne())?.groupsOwned
+}
+
+export async function getCredentialsByGroup(ctx: ParameterizedContext){
+  const credentials = await getConnection().getRepository(GroupCredential).createQueryBuilder("credential")
+    .leftJoin("credential.group", "group").leftJoin("group.owner", "owner")
+    .leftJoin("credential.membership", "membership").leftJoin("membership.member", "member")
+    .where("group.id = :groupId", { groupId: ctx.request.params.id }).andWhere("(member.id = :userId OR owner.id = :userId)", { userId: ctx.state.user.id })
+    .getMany()
+  if(credentials?.length == 0) throw forbidden("You're not a member of this group.")
+  ctx.body = credentials
 }
 
 export async function search(ctx: ParameterizedContext){
