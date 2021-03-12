@@ -40,10 +40,6 @@ export class Group {
 
   @ManyToOne(() => User, user => user.groupsOwned, { nullable: false })
   owner!: User
-
-  @ManyToMany(() => User, user => user.groupsJoined, { nullable: true })
-  @JoinTable()
-  members!: User[]
   
   @OneToMany(() => GroupMembership, groupMembership => groupMembership.group, { nullable: true })
   memberships!: GroupMembership[]

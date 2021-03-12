@@ -16,7 +16,7 @@ export class GroupCredential {
   })
   credential!: string
 
-  @OneToOne(() => GroupMembership, groupMembership => groupMembership.credential, { nullable: true })
+  @OneToOne(() => GroupMembership, groupMembership => groupMembership.credential, { nullable: true, onDelete: "SET NULL" })
   @JoinColumn()
   membership!: GroupMembership
 }

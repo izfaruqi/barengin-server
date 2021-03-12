@@ -1,5 +1,6 @@
 import { Config, Joi } from "koa-joi-router";
 import { errorResponseValidator } from ".";
+import { user } from "./user";
 
 const group = {
   id: Joi.number(),
@@ -122,6 +123,20 @@ export const search: Config = {
     },
     query: {
       query: Joi.string().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const revokeMembership: Config = {
+  validate: {
+    params: {
+      groupId: group.id.required(),
+      userId: user.id.required()
     },
     output: {
       '400-599': {

@@ -69,9 +69,6 @@ export class User {
   @OneToMany(() => Group, group => group.owner, { nullable: true })
   groupsOwned!: Group[]
 
-  @ManyToMany(() => Group, group => group.members, { nullable: true })
-  groupsJoined!: Group[]
-
   @OneToMany(() => GroupMembership, groupMembership => groupMembership.member, { nullable: true })
   groupMemberships!: GroupMembership[]
 

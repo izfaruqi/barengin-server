@@ -5,6 +5,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { DiscussionRoom } from "../entities/DiscussionRoom";
 import { Group } from "../entities/Group";
 import { GroupCredential } from "../entities/GroupCredential";
+import { GroupMembership } from "../entities/GroupMembership";
 import { User } from "../entities/User";
 
 export async function insert(ctx: ParameterizedContext) {
@@ -165,6 +166,17 @@ export async function search(ctx: ParameterizedContext){
     .where("groupCategory.id = :categoryId", { categoryId: ctx.request.params.categoryId })
     .andWhere("(group.name LIKE :query OR owner.firstName LIKE :query OR owner.lastName LIKE :query)", { query: "%" + ctx.request.query.query + "%" })
     .getMany()
+}
+
+export async function revokeMembership(ctx: ParameterizedContext){
+  const userId = parseInt(ctx.request.params.userId)
+  const groupId = parseInt(ctx.request.params.groupId)
+  const groupMembership = await getConnection().getRepository(GroupMembership).findOne({ where: { group: { id: groupId }, member: { id: userId } }, relations: ["group", "group.discussionRoom"] } )
+  if(groupMembership?.group == null) throw notFound("Group membership not found.")
+  await getConnection().transaction(async trx => {
+    await trx.getRepository(DiscussionRoom).createQueryBuilder().relation("members").of(groupMembership.group.discussionRoom).remove(userId)
+    await trx.getRepository(GroupMembership).delete(groupMembership)
+  })
 }
 
 export async function deleteById(ctx: ParameterizedContext){
