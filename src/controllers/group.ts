@@ -175,7 +175,7 @@ export async function revokeMembership(ctx: ParameterizedContext){
   if(groupMembership?.group == null) throw notFound("Group membership not found.")
   await getConnection().transaction(async trx => {
     await trx.getRepository(DiscussionRoom).createQueryBuilder().relation("members").of(groupMembership.group.discussionRoom).remove(userId)
-    await trx.getRepository(GroupMembership).delete(groupMembership)
+    await trx.getRepository(GroupMembership).remove(groupMembership)
   })
 }
 

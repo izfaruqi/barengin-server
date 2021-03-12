@@ -101,6 +101,9 @@ export async function insert(ctx: ParameterizedContext) {
       if((await trx.getRepository(User).findOne(ctx.state.user.id, { select: ["balance"]}))!.balance < 0){
         throw paymentRequired("Insufficient balance.")
       }
+      const now = new Date
+      await trx.getRepository(BalanceMutation).insert({ mutation: totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: buyer, createdAt: now, settledAt: now })
+
       await trx.getRepository(Transaction).update(savedTransaction.id, { paidAt: new Date(), paymentStatus: PaymentStatus.SETTLED, paymentMethod: PaymentMethod.BALANCE, successPayload: ""})
       await settleTransaction(savedTransaction.id, trx)
       ctx.body = { id: savedTransaction.id }
@@ -162,10 +165,9 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
     db = trxEntityManager
   }
   const transactionDetails = (await db.getRepository(Transaction).findOne(transactionId, { relations: ["items", "buyer", "items.group", "items.seller", "items.group.discussionRoom"] }))!
-  await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice * -1, mutationStatus: BalanceMutationStatus.SETTLED, owner: { id: transactionDetails.buyer.id }, createdAt: now, settledAt: now })
 
   if(transactionDetails.transactionType == TransactionType.TOPUP){
-    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now, settledAt: now })
+    await db.getRepository(BalanceMutation).insert({ mutation: transactionDetails.totalPrice, owner: transactionDetails.buyer, mutationStatus: BalanceMutationStatus.SETTLED, createdAt: now, settledAt: now })
     await db.getRepository(User).increment({ id: transactionDetails.buyer.id }, "balance", transactionDetails.totalPrice)
   } else { // Transaction type is sale.
     const groupQuery = db.getRepository(Group).createQueryBuilder().relation("memberships")
@@ -177,7 +179,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       membership.member = transactionDetails.buyer
       membership.credential = (await db.getRepository(GroupCredential).findOne({ where: { membership: null, group: item.group }}))! 
       membership.joinedAt = new Date()
-      membership.expiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000))
+      membership.expiresAt = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
       membership.relationToOwner = item.relationToOwner
       db.getRepository(GroupMembership).save(membership)
 
