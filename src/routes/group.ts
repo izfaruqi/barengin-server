@@ -60,7 +60,7 @@ const routes: Spec[] = [
     method: "DELETE",
     path: "/:groupId/membership/:userId",
     validate: revokeMembershipValidator.validate,
-    handler: [jwt, revokeMembership]
+    handler: [jwt, isAdmin, revokeMembership]
   },
   {
     method: "DELETE",

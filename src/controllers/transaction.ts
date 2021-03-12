@@ -63,6 +63,7 @@ export async function insert(ctx: ParameterizedContext) {
         transactionItem.name = transactionItem.group.name
         transactionItem.categoryName = transactionItem.groupCategory.name
         transactionItem.transaction = transaction
+        transactionItem.relationToOwner = item.relationToOwner
         
         await trx.getRepository(Group).decrement({ id: transactionItem.group.id }, "slotsAvailable", item.slotsTaken)
         await trx.getRepository(Group).increment({ id: transactionItem.group.id }, "slotsTaken", item.slotsTaken)
@@ -177,6 +178,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
       membership.credential = (await db.getRepository(GroupCredential).findOne({ where: { membership: null, group: item.group }}))! 
       membership.joinedAt = new Date()
       membership.expiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000))
+      membership.relationToOwner = item.relationToOwner
       db.getRepository(GroupMembership).save(membership)
 
       const review = new Review()

@@ -16,7 +16,8 @@ const transaction = {
   id: Joi.number(),
   items: Joi.array().items(Joi.object({
     id: Joi.number().required(),
-    slotsTaken: Joi.number().min(1).default(1)
+    slotsTaken: Joi.number().min(1).default(1),
+    relationToOwner: Joi.string().required()
   })).min(1),
   paymentMethod: Joi.string().valid('midtrans', 'balance'),
   transactionType: Joi.string().valid('sale', 'topup')

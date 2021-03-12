@@ -47,6 +47,11 @@ export class TransactionItem {
   })
   categoryName!: string
 
+  @Column({
+    default: ""
+  })
+  relationToOwner!: string
+
   @CreateDateColumn({ select: false })
   createdAt!: Date
 }
