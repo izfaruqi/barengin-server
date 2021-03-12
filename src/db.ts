@@ -6,6 +6,7 @@ import { Group } from './entities/Group'
 import { GroupCategory } from './entities/GroupCategory'
 import { GroupCredential } from './entities/GroupCredential'
 import { GroupMembership } from './entities/GroupMembership'
+import { GroupProvider } from './entities/GroupProvider'
 import { Review } from './entities/Review'
 import { Transaction } from './entities/Transaction'
 import { TransactionItem } from './entities/TransactionItem'
@@ -32,7 +33,8 @@ export default async function initDB() {
       DiscussionMessage,
       DiscussionRoom,
       GroupMembership,
-      GroupCredential
+      GroupCredential,
+      GroupProvider
     ]
   })
 }
