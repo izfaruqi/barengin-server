@@ -21,7 +21,7 @@ function hideIdFromTransactionItems(items: any[]): any {
   })
 }
 
-const refuncCutoffPeriod = 25 * 24 * 60 * 60 * 1000
+const REFUND_CUTOFF_PERIOD = 25 * 24 * 60 * 60 * 1000
 
 export async function insert(ctx: ParameterizedContext) {
   await getConnection().transaction(async trx => {
@@ -178,7 +178,7 @@ async function settleTransaction(transactionId: number, trxEntityManager?: Entit
     const discussionRoomQuery = db.getRepository(DiscussionRoom).createQueryBuilder().relation("members")
 
     await Promise.all(transactionDetails.items.map(async item => {
-      await db.getRepository(TransactionItem).update(item.id, { refundCutoffAt: new Date(Date.now() + refuncCutoffPeriod) })
+      await db.getRepository(TransactionItem).update(item.id, { refundCutoffAt: new Date(Date.now() + REFUND_CUTOFF_PERIOD) })
 
       const membership = new GroupMembership()
       membership.group = item.group
