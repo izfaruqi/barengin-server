@@ -258,6 +258,7 @@ export async function imburseTransactionItem(ctx: ParameterizedContext){
     await trx.getRepository(User).increment({ id: transactionItem.seller.id }, "balance", transactionItem.price * transactionItem.slotsTaken)
     await trx.getRepository(TransactionItem).update(transactionItem.id, { refundCutoffAt: undefined })
   })
+  ctx.body = { success: true }
 }
 
 export async function refundTransactionItem(ctx: ParameterizedContext){
