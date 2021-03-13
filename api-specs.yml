@@ -7,7 +7,326 @@ tags:
   - name: user
   - name: admin_required
   - name: seller_required
+  - name: provider
+  - name: group_category
 paths:
+  /provider:
+    get:
+      tags:
+        - provider
+      summary: Get all providers
+      description: Get the list of all providers.
+      responses:
+        '200': 
+          description: Returns the list of all providers.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/Provider"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - admin_required
+        - provider
+      security:
+        - bearerJWT: []
+      summary: Add new provider.
+      description: Add new provider.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  $ref: "#/components/schemas/Provider/properties/name"   
+      responses:
+        '200': 
+          description: Returns the new provider id.
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/Provider"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /provider/{id}:
+    post:
+      tags:
+        - admin_required
+        - provider
+      security:
+        - bearerJWT: []
+      summary: Edit provider by id.
+      description: Edit provider by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Provider ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  $ref: "#/components/schemas/Provider/properties/name"   
+      responses:
+        '200': 
+          description: Returns the edited fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    $ref: "#/components/schemas/Provider/properties/name"  
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    delete:
+      tags:
+        - admin_required
+        - provider
+      security:
+        - bearerJWT: []
+      summary: Delete provider by id.
+      description: Delete provider by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Provider ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema: 
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  
+  /group-category:
+      get:
+        tags:
+          - group_category
+        summary: Get all group categories
+        description: Get the list of all group categories.
+        responses:
+          '200': 
+            description: Returns the list of all group categories.
+            content:
+              application/json:
+                schema: 
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/GroupCategory"
+          default:
+            $ref: "#/components/responses/UnexpectedError"
+      post:
+        tags:
+          - admin_required
+          - group_category
+        security:
+          - bearerJWT: []
+        summary: Add new group category.
+        description: Add new group category.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - name
+                  - price
+                  - packagePrice
+                  - description
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                  price:
+                    type: number
+                    min: 0
+                  packagePrice:
+                    type: number
+                    min: 0
+                  description:
+                    type: string
+        responses:
+          '200': 
+            description: Returns the group category id.
+            content:
+              application/json:
+                schema: 
+                  type: object
+                  required:
+                    - id
+                  properties:
+                    id:
+                      type: number
+          '400':
+            $ref: "#/components/responses/BadRequestError"
+          '401':
+            $ref: "#/components/responses/MalformedJWTError"
+          '403':
+            $ref: "#/components/responses/NotEnoughPrivilegeError"
+          default:
+            $ref: "#/components/responses/UnexpectedError"
+            
+  /group-category/{id}:
+      get:
+        tags:
+          - group_category
+        summary: Get group category by id
+        description: Get group category by id.
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: number
+            required: true
+            description: Group category ID
+        responses:
+          '200': 
+            description: Returns the group category object.
+            content:
+              application/json:
+                schema: 
+                  $ref: "#/components/schemas/GroupCategory"
+          default:
+            $ref: "#/components/responses/UnexpectedError"
+      post:
+        tags:
+          - admin_required
+          - group_category
+        security:
+          - bearerJWT: []
+        summary: Edit group category by id.
+        description: Edit group category by id.
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: number
+            required: true
+            description: Group category ID
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                  price:
+                    type: number
+                    min: 0
+                  packagePrice:
+                    type: number
+                    min: 0
+                  description:
+                    type: string 
+        responses:
+          '200': 
+            description: Returns the edited fields.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      minLength: 1
+                    price:
+                      type: number
+                      min: 0
+                    packagePrice:
+                      type: number
+                      min: 0
+                    description:
+                      type: string   
+          '400':
+            $ref: "#/components/responses/BadRequestError"
+          '401':
+            $ref: "#/components/responses/MalformedJWTError"
+          '403':
+            $ref: "#/components/responses/NotEnoughPrivilegeError"
+          default:
+            $ref: "#/components/responses/UnexpectedError"
+      delete:
+        tags:
+          - admin_required
+          - group_category
+        security:
+          - bearerJWT: []
+        summary: Delete group category by id.
+        description: Delete group category by id.
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: number
+            required: true
+            description: Group category ID
+        responses:
+          '200': 
+            content:
+              application/json:
+                schema: 
+                  type: object
+                  required:
+                    - success
+                  properties:
+                    success:
+                      type: boolean
+                      default: true
+          '400':
+            $ref: "#/components/responses/BadRequestError"
+          '401':
+            $ref: "#/components/responses/MalformedJWTError"
+          '403':
+            $ref: "#/components/responses/NotEnoughPrivilegeError"
+          default:
+            $ref: "#/components/responses/UnexpectedError"
+  
   /user/:
     get:
       tags:
@@ -295,6 +614,8 @@ paths:
                   $ref: "#/components/schemas/User/properties/isAdmin"
                 isSeller:
                   $ref: "#/components/schemas/User/properties/isSeller"
+                referralCode:
+                  $ref: "#/components/schemas/User/properties/referralCode"
       responses:
         '200':
           description: Returns registered user id.
@@ -387,6 +708,24 @@ paths:
                              
 components:
   responses:
+    BadRequestError:
+      description: Invalid request.
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
+    MalformedJWTError:
+      description: Malformed/expired JWT.
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
+    NotEnoughPrivilegeError:
+      description: Not enough privilege error.
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
     UnexpectedError:
       description: Unexpected error.
       content:
@@ -447,6 +786,94 @@ components:
           type: number
         emailVerified:
           type: boolean
+        referralCode:
+          type: string
+        referredBy:
+          $ref: "#/components/schemas/UserReferred"
+        referredUsers:
+          type: array
+          items: 
+            $ref: "#/components/schemas/UserReferred"
+    UserReferred:
+      description: Dummy model for circular refrence workaround for Swagger UI. This model is exactly the same as User and should be treated as such.
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - isAdmin
+        - isSeller
+        - balance
+      properties:
+        id:
+          type: number
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+        isAdmin:
+          type: boolean
+          default: false
+        isSeller:
+          type: boolean
+          default: false
+        balance:
+          type: number
+          default: 0
+        address:
+          type: string
+        birthDate:
+          type: number
+        phone:
+          type: number
+        emailVerified:
+          type: boolean
+        referralCode:
+          type: string
+        referredBy:
+          $ref: "#/components/schemas/User"
+        referredUsers:
+          type: array
+          items: 
+            $ref: "#/components/schemas/User"
+    Provider:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+          minLength: 1
+    GroupCategory:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - packagePrice
+        - description
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          min: 0
+        packagePrice:
+          type: number
+          min: 0
+        description:
+          type: string
     UserEdit:
       type: object
       properties:
