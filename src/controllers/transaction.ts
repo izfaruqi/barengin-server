@@ -243,11 +243,29 @@ export async function getAllSales(ctx: ParameterizedContext){
   ctx.body = res
 }
 
+export async function imburseTransactionItem(ctx: ParameterizedContext){
+  const now = new Date()
+  const transactionItem = await getConnection().getRepository(TransactionItem).findOne({ where: { id: ctx.request.params.id }, relations: ["group", "seller", "transaction", "transaction.buyer"]})
+  if(transactionItem == null) throw notFound("Transaction item not found.")
+  if(transactionItem.refundCutoffAt == null) throw forbidden("Transaction item is already imbursed to the seller.")
+  if(transactionItem.refundCutoffAt.getTime() >= Date.now()) throw forbidden("Transaction item is still within the refund cutoff date.")
+  if(transactionItem.refundedAt != null) throw forbidden("Transaction item is already refunded.")
+
+  await getConnection().transaction(async trx => {
+    await trx.getRepository(BalanceMutation).insert({ mutation: transactionItem.price * transactionItem.slotsTaken * -1, mutationStatus: BalanceMutationStatus.HELD, owner: transactionItem.seller, createdAt: now })
+    await trx.getRepository(BalanceMutation).insert({ mutation: transactionItem.price * transactionItem.slotsTaken, mutationStatus: BalanceMutationStatus.SETTLED, owner: transactionItem.seller, createdAt: now })
+    await trx.getRepository(User).decrement({ id: transactionItem.seller.id }, "balanceHeld", transactionItem.price * transactionItem.slotsTaken)
+    await trx.getRepository(User).increment({ id: transactionItem.seller.id }, "balance", transactionItem.price * transactionItem.slotsTaken)
+    await trx.getRepository(TransactionItem).update(transactionItem.id, { refundCutoffAt: undefined })
+  })
+}
+
 export async function refundTransactionItem(ctx: ParameterizedContext){
   const now = new Date()
   const transactionItem = await getConnection().getRepository(TransactionItem).findOne({ where: { id: ctx.request.params.id }, relations: ["group", "seller", "transaction", "transaction.buyer"]})
   if(transactionItem == null) throw notFound("Transaction item not found.")
-  if(transactionItem.refundCutoffAt.getTime() <= Date.now()) throw forbidden("Transaction item is past refund cutoff date.")
+  if(transactionItem.refundCutoffAt == null) throw forbidden("Transaction item is already imbursed to the seller.")
+  if(transactionItem.refundCutoffAt.getTime() <= Date.now()) throw forbidden("Transaction item is past the refund cutoff date.")
   if(transactionItem.refundedAt != null) throw forbidden("Transaction item is already refunded.")
 
   await getConnection().transaction(async trx => {
@@ -256,7 +274,7 @@ export async function refundTransactionItem(ctx: ParameterizedContext){
     await trx.getRepository(BalanceMutation).insert({ mutation: transactionItem.price * transactionItem.slotsTaken, mutationStatus: BalanceMutationStatus.SETTLED, owner: transactionItem.transaction.buyer, createdAt: now })
     await trx.getRepository(User).decrement({ id: transactionItem.seller.id }, "balanceHeld", transactionItem.price * transactionItem.slotsTaken)
     await trx.getRepository(User).increment({ id: transactionItem.transaction.buyer.id }, "balance", transactionItem.price * transactionItem.slotsTaken)
-    await trx.getRepository(TransactionItem).update(transactionItem.id, { refundedAt: now })
+    await trx.getRepository(TransactionItem).update(transactionItem.id, { refundedAt: now, refundCutoffAt: undefined })
   })
   ctx.body = { success: true }
 }
