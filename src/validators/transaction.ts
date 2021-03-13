@@ -16,7 +16,8 @@ const transaction = {
   id: Joi.number(),
   items: Joi.array().items(Joi.object({
     id: Joi.number().required(),
-    slotsTaken: Joi.number().min(1).default(1)
+    slotsTaken: Joi.number().min(1).default(1),
+    relationToOwner: Joi.string().required()
   })).min(1),
   paymentMethod: Joi.string().valid('midtrans', 'balance'),
   transactionType: Joi.string().valid('sale', 'topup')
@@ -63,6 +64,16 @@ export const getCurrent: Config = {
   }
 }
 
+export const getAllSales: Config = {
+  validate: {
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
 export const getById: Config = {
   validate: {
     params: {
@@ -80,6 +91,32 @@ export const cancelById: Config = {
   validate: {
     params: {
       id: transaction.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const refundTransactionItem: Config = {
+  validate: {
+    params: {
+      id: Joi.number().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const imburseTransactionItem: Config = {
+  validate: {
+    params: {
+      id: Joi.number().required()
     },
     output: {
       '400-599': {

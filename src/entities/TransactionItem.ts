@@ -47,6 +47,17 @@ export class TransactionItem {
   })
   categoryName!: string
 
+  @Column({
+    default: ""
+  })
+  relationToOwner!: string
+
   @CreateDateColumn({ select: false })
   createdAt!: Date
+
+  @Column({ nullable: true })
+  refundCutoffAt!: Date
+
+  @Column({ nullable: true })
+  refundedAt!: Date
 }

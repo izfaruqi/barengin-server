@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, ManyToMany, Index, JoinTable, In } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, ManyToMany, Index, JoinTable, In, ManyToOne } from 'typeorm'
 import { BalanceMutation } from './BalanceMutation'
 import { Group } from './Group'
+import { GroupMembership } from './GroupMembership'
 import { Review } from './Review'
 //import { Product } from './Group'
 
@@ -65,17 +66,32 @@ export class User {
   })
   balance!: number
 
+  @Column({
+    default: 0
+  })
+  balanceHeld!: number
+
   @OneToMany(() => Group, group => group.owner, { nullable: true })
   groupsOwned!: Group[]
 
-  @ManyToMany(() => Group, group => group.members, { nullable: true })
-  groupsJoined!: Group[]
+  @OneToMany(() => GroupMembership, groupMembership => groupMembership.member, { nullable: true })
+  groupMemberships!: GroupMembership[]
 
   @OneToMany(() => Review, review => review.owner, { nullable: true })
   reviews!: Review[]
 
   @OneToMany(() => BalanceMutation, balanceMutation => balanceMutation.owner, { nullable: true })
   balanceMutations!: BalanceMutation
+
+  @ManyToOne(() => User, user => user.referredUsers, { nullable: true })
+  referredBy!: User
+
+  @Column()
+  @Index()
+  referralCode!: string
+
+  @OneToMany(() => User, user => user.referredBy, { nullable: true })
+  referredUsers!: User[]
 
   @DeleteDateColumn({
     select: false,

@@ -1,7 +1,12 @@
 import { createConnection } from 'typeorm'
 import { BalanceMutation } from './entities/BalanceMutation'
+import { DiscussionMessage } from './entities/DiscussionMessage'
+import { DiscussionRoom } from './entities/DiscussionRoom'
 import { Group } from './entities/Group'
 import { GroupCategory } from './entities/GroupCategory'
+import { GroupCredential } from './entities/GroupCredential'
+import { GroupMembership } from './entities/GroupMembership'
+import { GroupProvider } from './entities/GroupProvider'
 import { Review } from './entities/Review'
 import { Transaction } from './entities/Transaction'
 import { TransactionItem } from './entities/TransactionItem'
@@ -24,7 +29,12 @@ export default async function initDB() {
       Transaction,
       TransactionItem,
       Review,
-      BalanceMutation
+      BalanceMutation,
+      DiscussionMessage,
+      DiscussionRoom,
+      GroupMembership,
+      GroupCredential,
+      GroupProvider
     ]
   })
 }

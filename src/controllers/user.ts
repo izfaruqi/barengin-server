@@ -8,15 +8,28 @@ import jwt from 'jsonwebtoken'
 import { forbidden, notFound, unauthorized } from "@hapi/boom";
 import firebase from "firebase";
 import admin from 'firebase-admin'
+import crypto from 'crypto'
+
+const MAX_REFERRALS = 1
 
 export async function register(ctx: ParameterizedContext){
   const user: QueryDeepPartialEntity<User> = {
     ...ctx.request.body
   }
   try {
+    let referrer = null
+    if(ctx.request.body.referralCode){
+      referrer = await getConnection().getRepository(User).findOne({ where: { referralCode: ctx.request.body.referralCode }, loadRelationIds: true })
+      if(referrer == null) throw notFound("Referral code not found.")
+      if(referrer.referredUsers.length >= MAX_REFERRALS) throw forbidden("Referring user has reached it's maximum referree amount.") // TODO: This part is subject to race conditions.
+      user.referredBy = referrer
+    }
+    user.referralCode = await crypto.randomBytes(10).toString("hex")
     const creds = await firebase.auth().createUserWithEmailAndPassword(ctx.request.body.email, ctx.request.body.password)
     user.firebaseUid = creds.user?.uid
+    
     const res = await getConnection().getRepository(User).insert(user)
+    if(referrer) await getConnection().getRepository(User).createQueryBuilder().relation("referredUsers").of(referrer).add(user)
     ctx.body = { id: res.identifiers[0].id }
   } catch (e){
     switch(e.code){
@@ -70,10 +83,14 @@ async function generateToken(firebaseUid: string): Promise<object | null> {
   return { token: await jwt.sign({ id: userFromDB.id, isAdmin: userFromDB.isAdmin, isSeller: userFromDB.isSeller, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + (60*60*24) }, process.env.JWT_SECRET!)}
 }
 
-
 export async function getCurrent(ctx: ParameterizedContext) {
-  const id = ctx.state.user.id
-  const userFromDB = await getConnection().getRepository(User).findOne({ where: { id: id }})
+  const userFromDB = await getConnection().getRepository(User).createQueryBuilder("user")
+    .where("user.id = :id", { id: ctx.state.user.id })
+    .leftJoin("user.referredBy", "referredBy")
+    .leftJoin("user.referredUsers", "referredUsers")
+    .addSelect("referredBy.id").addSelect("referredBy.firstName").addSelect("referredBy.lastName")
+    .addSelect("referredUsers.id").addSelect("referredUsers.firstName").addSelect("referredUsers.lastName")
+    .getOne()
   ctx.body = userFromDB
 }
 
@@ -83,7 +100,15 @@ export async function getAll(ctx: ParameterizedContext) {
 }
 
 export async function getById(ctx: ParameterizedContext) {
-  ctx.body = await getConnection().getRepository(User).find({ where: { id: ctx.params.id }})
+  const userFromDB = await getConnection().getRepository(User).createQueryBuilder("user")
+    .where("user.id = :id", { id: ctx.request.params.id })
+    .leftJoin("user.referredBy", "referredBy")
+    .leftJoin("user.referredUsers", "referredUsers")
+    .addSelect("referredBy.id").addSelect("referredBy.firstName").addSelect("referredBy.lastName")
+    .addSelect("referredUsers.id").addSelect("referredUsers.firstName").addSelect("referredUsers.lastName")
+    .getOne()
+  if(userFromDB == null) throw notFound("User not found.")
+  ctx.body = userFromDB
 }
 
 export async function editById(ctx: ParameterizedContext){

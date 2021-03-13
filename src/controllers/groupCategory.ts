@@ -5,7 +5,7 @@ import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity
 import { GroupCategory } from '../entities/GroupCategory'
 
 export async function insert(ctx: ParameterizedContext) {
-  const res = await getConnection().getRepository(GroupCategory).insert({ ...ctx.request.body })
+  const res = await getConnection().getRepository(GroupCategory).insert({ ...ctx.request.body, provider: { id: ctx.request.body.providerId } })
   ctx.body = { id: res.identifiers[0].id }
 }
 

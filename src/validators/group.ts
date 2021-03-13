@@ -1,5 +1,6 @@
 import { Config, Joi } from "koa-joi-router";
 import { errorResponseValidator } from ".";
+import { user } from "./user";
 
 const group = {
   id: Joi.number(),
@@ -102,10 +103,7 @@ export const editById: Config = {
     },
     body: {
       name: group.name,
-      categoryId: group.categoryId,
-      slotsAvailable: group.slotsAvailable,
-      rules: group.rules,
-      credentials: group.credentials
+      rules: group.rules
     },
     output: {
       '400-599': {
@@ -122,6 +120,50 @@ export const search: Config = {
     },
     query: {
       query: Joi.string().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const getCredentialsByGroup: Config = {
+  validate: {
+    params: {
+      id: group.id.required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const editCredentialById: Config = {
+  validate: {
+    type: "json",
+    params: {
+      id: Joi.number().required()
+    },
+    body: {
+      credential: Joi.string().required()
+    },
+    output: {
+      '400-599': {
+        body: errorResponseValidator
+      }
+    },
+  }
+}
+
+export const revokeMembership: Config = {
+  validate: {
+    params: {
+      groupId: group.id.required(),
+      userId: user.id.required()
     },
     output: {
       '400-599': {

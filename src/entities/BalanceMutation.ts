@@ -17,7 +17,7 @@ export class BalanceMutation {
   mutation!: number
 
   // If owner is null, the mutation goes to the system. E.g. top ups and fees. 
-  @ManyToOne(() => User, user => user.balanceMutations, { nullable: true })
+  @ManyToOne(() => User, { nullable: true })
   owner!: User
 
   @Column({
@@ -29,8 +29,4 @@ export class BalanceMutation {
 
   @Column()
   createdAt!: Date
-
-  // TODO: The concept of "settled and held mutation" is terribly wrong. Should've made two different balances altogther.
-  @Column({ nullable: true })
-  settledAt!: Date
 }

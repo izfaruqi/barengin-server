@@ -16,7 +16,8 @@ export const insert: Config = {
       name: groupCategory.name.required(),
       description: groupCategory.description,
       price: groupCategory.price.required(),
-      packagePrice: groupCategory.packagePrice.required()
+      packagePrice: groupCategory.packagePrice.required(),
+      providerId: Joi.number().required()
     },
     output: {
       '400-599': {

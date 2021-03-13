@@ -1,7 +1,7 @@
 import jwt from '../middlewares/jwt'
 import Router, { Spec } from 'koa-joi-router'
-import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned, search } from '../controllers/group'
-import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator, search as searchValidator } from '../validators/group'
+import { insert, getAllAdmin, getById, deleteById, editById, getAllByCategory, getJoined, getOwned, search, revokeMembership, getCredentialsByGroup, editCredentialById, revokeMembershipEndpoint } from '../controllers/group'
+import { insert as insertValidator, getAll as getAllValidator, getById as getByIdValidator, editById as editByIdValidator, deleteById as deleteByIdValidator, getAllByCategory as getAllByCategoryValidator, getJoined as getJoinedValidator, getOwned as getOwnedValidator, search as searchValidator, revokeMembership as revokeMembershipValidator, getCredentialsByGroup as getCredentialsByGroupValidator, editCredentialById as editCredentialByIdValidator } from '../validators/group'
 import isSeller from '../middlewares/isSeller'
 import isAdmin from '../middlewares/isAdmin'
 
@@ -50,11 +50,29 @@ const routes: Spec[] = [
     validate: editByIdValidator.validate,
     handler: [jwt, editById]
   },
-  {
+  { // TODO: Rename this route.
     method: "GET",
-    path: "/:categoryId/search",
+    path: "/group-category/:categoryId/search",
     validate: searchValidator.validate,
     handler: [jwt, search]
+  },
+  {
+    method: "GET",
+    path: "/:id/credentials",
+    validate: getCredentialsByGroupValidator.validate,
+    handler: [jwt, getCredentialsByGroup]
+  },
+  {
+    method: "POST",
+    path: "/credential/:id",
+    validate: editCredentialByIdValidator.validate,
+    handler: [jwt, editCredentialById]
+  },
+  {
+    method: "DELETE",
+    path: "/:groupId/membership/:userId",
+    validate: revokeMembershipValidator.validate,
+    handler: [jwt, isAdmin, revokeMembershipEndpoint]
   },
   {
     method: "DELETE",

@@ -13,7 +13,8 @@ export const user = {
   birthDate: Joi.number(),
   phone: Joi.number(),
   address: Joi.string(),
-  balance: Joi.number()  
+  balance: Joi.number(),
+  referralCode: Joi.string().hex()
 }
 
 export const register: Config = {
@@ -25,7 +26,8 @@ export const register: Config = {
       firstName: user.firstName.required(),
       lastName: user.lastName.required(),
       isAdmin: user.isAdmin,
-      isSeller: user.isSeller
+      isSeller: user.isSeller,
+      referralCode: user.referralCode
     },
     output: {
       '400-599': {

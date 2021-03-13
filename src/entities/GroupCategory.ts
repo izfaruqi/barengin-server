@@ -1,11 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, JoinTable } from 'typeorm'
+import { Entity, Column, PrimaryGeneratedColumn, DeleteDateColumn, OneToMany, JoinTable, ManyToOne } from 'typeorm'
 import { Group } from './Group'
+import { GroupProvider } from './GroupProvider'
 
 @Entity()
 export class GroupCategory {
   @PrimaryGeneratedColumn()
   id!: number
 
+  @ManyToOne(() => GroupProvider, groupProvider => groupProvider.categories, { nullable: true })
+  provider!: GroupProvider
+  
   @Column({
     default: ""
   })
