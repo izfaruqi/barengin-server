@@ -8,7 +8,6 @@ import { User } from "../entities/User";
 // There's no "getDiscussionRoomById" and "editDiscussionRoomById" because discussion rooms are so tightly
 // bound to groups that all the metadata needed is already available in the group.
 
-// TODO: Don't allow user to see messages that's sent before they're invited (probably requires rehauling the entire membership system :/).
 export async function getMessagesByGroupId(ctx: ParameterizedContext){
   // Might seperate this part into a function if it's used more than twice.
   const group = await getConnection().getRepository(Group).createQueryBuilder("group")

@@ -5,8 +5,8 @@ const groupCategory = {
   id: Joi.number(),
   name: Joi.string().trim().min(1),
   description: Joi.string(),
-  price: Joi.number(),
-  packagePrice: Joi.number()
+  price: Joi.number().min(0),
+  packagePrice: Joi.number().min(0)
 }
 
 export const insert: Config = {
