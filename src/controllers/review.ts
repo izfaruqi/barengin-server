@@ -4,7 +4,7 @@ import { getConnection } from "typeorm";
 import { Review } from "../entities/Review";
 
 export async function getCurrent(ctx: ParameterizedContext){
-  ctx.body = await getConnection().getRepository(Review).find({ where: { owner: { id: ctx.state.user.id }}, relations: ["group"] })
+  ctx.body = await getConnection().getRepository(Review).find({ where: { owner: { id: ctx.state.user.id }}, relations: ["group"], order: { id: "DESC" } })
 }
 
 export async function getCurrentAsSeller(ctx: ParameterizedContext){
@@ -16,6 +16,7 @@ export async function getCurrentAsSeller(ctx: ParameterizedContext){
     .andWhere("owner.id = :id", { id: ctx.state.user.id })
     .andWhere("review.published IS TRUE")
     .addSelect("reviewOwner.id").addSelect("reviewOwner.firstName").addSelect("reviewOwner.lastName")
+    .orderBy("review.publishedAt", "DESC")
     .getMany() 
 }
 

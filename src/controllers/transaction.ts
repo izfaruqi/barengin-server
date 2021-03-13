@@ -226,7 +226,7 @@ export async function getById(ctx: ParameterizedContext){
 
 // Get all transactions for the logged in user
 export async function getCurrent(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(Transaction).find({ where: { buyer: { id: ctx.state.user.id } }, relations: ["items"]})
+  const res = await getConnection().getRepository(Transaction).find({ where: { buyer: { id: ctx.state.user.id } }, relations: ["items"], order: { createdAt: "DESC" }})
   if(res == null){
     throw notFound("Transaction not found.")
   }
@@ -238,7 +238,7 @@ export async function getCurrent(ctx: ParameterizedContext){
 }
 
 export async function getAllSales(ctx: ParameterizedContext){
-  const res = await getConnection().getRepository(TransactionItem).find({ where: { seller: { id: ctx.state.user.id } }, relations: ["group"], select: ["id", "group", "slotsTaken", "price", "name", "categoryName", "relationToOwner", "createdAt", "refundCutoffAt", "refundedAt"]})
+  const res = await getConnection().getRepository(TransactionItem).find({ where: { seller: { id: ctx.state.user.id } }, relations: ["group"], order: { createdAt: "DESC" }, select: ["id", "group", "slotsTaken", "price", "name", "categoryName", "relationToOwner", "createdAt", "refundCutoffAt", "refundedAt"]})
 
   ctx.body = res
 }
