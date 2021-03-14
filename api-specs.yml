@@ -13,6 +13,7 @@ tags:
   - name: balance_mutation
   - name: review
   - name: discussion
+  - name: group
 paths:
   /provider:
     get:
@@ -106,6 +107,8 @@ paths:
           $ref: "#/components/responses/MalformedJWTError"
         '403':
           $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
         default:
           $ref: "#/components/responses/UnexpectedError"
     delete:
@@ -141,6 +144,8 @@ paths:
           $ref: "#/components/responses/MalformedJWTError"
         '403':
           $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
         default:
           $ref: "#/components/responses/UnexpectedError"
   
@@ -244,6 +249,8 @@ paths:
             $ref: "#/components/responses/BadRequestError"
           '401':
             $ref: "#/components/responses/MalformedJWTError"
+          '404':
+            $ref: "#/components/responses/NotFoundError"
           default:
             $ref: "#/components/responses/UnexpectedError"
       post:
@@ -304,6 +311,8 @@ paths:
             $ref: "#/components/responses/MalformedJWTError"
           '403':
             $ref: "#/components/responses/NotEnoughPrivilegeError"
+          '404':
+            $ref: "#/components/responses/NotFoundError"
           default:
             $ref: "#/components/responses/UnexpectedError"
       delete:
@@ -339,6 +348,8 @@ paths:
             $ref: "#/components/responses/MalformedJWTError"
           '403':
             $ref: "#/components/responses/NotEnoughPrivilegeError"
+          '404':
+            $ref: "#/components/responses/NotFoundError"
           default:
             $ref: "#/components/responses/UnexpectedError"
   
@@ -487,6 +498,7 @@ paths:
          
         default:
           $ref: "#/components/responses/UnexpectedError"
+          
   /discussion/{groupId}/message:
     get:
       tags:
@@ -574,6 +586,496 @@ paths:
           $ref: "#/components/responses/MalformedJWTError"
         '403':
           $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  
+  /group:
+    get:
+      tags:
+        - admin_required
+        - group
+      security:
+        - bearerJWT: []
+      summary: Get all groups
+      description: Get the list of all groups.
+      responses:
+        '200': 
+          description: Returns the list of all groups.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - seller_required
+        - group
+      security:
+        - bearerJWT: []
+      summary: Add new group
+      description: Add new group.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - slotsAvailable
+                - slotsTaken
+                - rules
+              properties:
+                name:
+                  type: string
+                slotsAvailable:
+                  type: number
+                slotsTaken:
+                  type: number
+                rules:
+                  type: string
+      responses:
+        '200': 
+          description: Returns the group id.
+          content:
+            application/json:
+              schema: 
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: number
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/joined:
+    get:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Get all joined groups
+      description: Get all joined groups.
+      responses:
+        '200': 
+          description: Returns the list of groups.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/owned:
+    get:
+      tags:
+        - group
+        - seller_required
+      security:
+        - bearerJWT: []
+      summary: Get all owned groups
+      description: Get all owned groups.
+      responses:
+        '200': 
+          description: Returns the list of groups.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/{id}:
+    get:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Get group by id
+      description: Get group by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group ID
+        - in: query
+          name: full
+          schema:
+            type: boolean
+          description: Fetch full data (admin/owner ownly)
+      responses:
+        '200': 
+          description: Returns the group object.
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/Group"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Edit group by id.
+      description: Edit group by id. Only admins or owner can edit a group.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                rules:
+                  type: string
+      responses:
+        '200': 
+          description: Returns the edited fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  rules:
+                    type: string  
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    delete:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Delete group by id.
+      description: Delete group by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema: 
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/group-category/{groupCategoryId}:
+    get:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Get all groups by group category id.
+      description: Get the list of all groups by group category id.
+      parameters:
+        - in: path
+          name: groupCategoryId
+          schema:
+            type: number
+          required: true
+          description: Group category ID
+      responses:
+        '200': 
+          description: Returns the list of groups.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - name
+                    - slotsAvailable
+                    - slotsTaken
+                    - rules
+                    - groupCategory
+                    - owner
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                    slotsAvailable:
+                      type: number
+                    slotsTaken:
+                      type: number
+                    rules:
+                      type: string
+                    groupCategory:
+                      $ref: "#/components/schemas/GroupCategory"
+                    owner:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/group-category/{groupCategoryId}/search:
+    get:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Search groups in a group category.
+      description: "Search groups in a group category. The query will be matched against the group's name and the owner's first and last name."
+      parameters:
+        - in: path
+          name: groupCategoryId
+          schema:
+            type: number
+          required: true
+          description: Group category ID
+        - in: query
+          name: query
+          schema:
+            type: string
+          required: true
+          description: Search query
+      responses:
+        '200': 
+          description: Returns the list of groups.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - name
+                    - slotsAvailable
+                    - slotsTaken
+                    - rules
+                    - groupCategory
+                    - owner
+                  properties:
+                    id:
+                      type: number
+                    name:
+                      type: string
+                    slotsAvailable:
+                      type: number
+                    slotsTaken:
+                      type: number
+                    rules:
+                      type: string
+                    groupCategory:
+                      $ref: "#/components/schemas/GroupCategory"
+                    owner:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/{groupId}/membership/{membershipId}:
+    delete:
+      tags:
+        - admin_required
+        - group
+      security:
+        - bearerJWT: []
+      summary: "Revoke a user's membership to a group"
+      description: "Revoke a user's membership to a group"
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: number
+          required: true
+          description: Group ID
+        - in: path
+          name: membershipId
+          schema:
+            type: number
+          required: true
+          description: Membership ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema: 
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/{id}/credentials:
+    get:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Get all accessible credentials to a group
+      description: Get all accessible credentials to a group. If queried by the owner, will return all credentials to the group.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group ID
+      responses:
+        '200': 
+          description: Returns the group category object.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - credential
+                  properties:
+                    id:
+                      type: number
+                    credential:
+                      type: number
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        '404':
+          $ref: "#/components/responses/NotFoundError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /group/credential/{id}:
+    post:
+      tags:
+        - group
+      security:
+        - bearerJWT: []
+      summary: Edit group credential by id.
+      description: Edit credential by id. Only owner can edit.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Credential ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credential:
+                  type: string
+      responses:
+        '200': 
+          description: Returns the edited fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credential:
+                    type: string
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
         default:
           $ref: "#/components/responses/UnexpectedError"
   /user/:
@@ -952,6 +1454,12 @@ paths:
                              
 components:
   responses:
+    NotFoundError:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
     BadRequestError:
       description: Invalid request.
       content:
@@ -1212,6 +1720,58 @@ components:
         sentAt:
           type: string
           format: date-time
+    Group:
+      type: object
+      required:
+        - id
+        - name
+        - slotsAvailable
+        - slotsTaken
+        - rules
+        - groupCategory
+        - owner
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        slotsAvailable:
+          type: number
+        slotsTaken:
+          type: number
+        rules:
+          type: string
+        groupCategory:
+          $ref: "#/components/schemas/GroupCategory"
+        owner:
+          type: object
+          properties:
+            id:
+              type: number
+            firstName:
+              type: string
+            lastName:
+              type: string
+        memberships:
+          $ref: "#/components/schemas/GroupMembership"
+    GroupMembership:
+     type: object
+     required:
+       - id
+       - member
+       - joinedAt
+     properties:
+       id:
+         type: number
+       member:
+         type: object
+         properties:
+           id:
+             type: number
+           firstName:
+             type: string
+           lastName:
+             type: string
 
   securitySchemes:
     bearerJWT:
