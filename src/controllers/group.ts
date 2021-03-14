@@ -50,6 +50,11 @@ export async function editById(ctx: ParameterizedContext) {
     if(ctx.request.body.categoryId != null){
       partialGroup.groupCategory = { id: ctx.request.body.categoryId }
     }
+    if(!ctx.state.user.isAdmin){
+      if((await getConnection().getRepository(Group).findOne({ where: { id: ctx.request.params.id }, relations: ["owner"] }))?.owner.id != ctx.state.user.id){
+        throw forbidden("You don't own this group.")
+      }
+    }
     const res = await getConnection().getRepository(Group).update(ctx.request.params.id, partialGroup)
     if(res.raw.affectedRows == 0){
       throw notFound("Group not found.")
@@ -208,6 +213,11 @@ export async function revokeMembership(userId: number, groupId: number, trx: Ent
 }
 
 export async function deleteById(ctx: ParameterizedContext){
+  if(!ctx.state.user.isAdmin){
+    if((await getConnection().getRepository(Group).findOne({ where: { id: ctx.request.params.id }, relations: ["owner"] }))?.owner.id != ctx.state.user.id){
+      throw forbidden("You don't own this group.")
+    }
+  }
   const res = await getConnection().getRepository(Group).softDelete(ctx.request.params.id)
   if(res.raw.affectedRows == 0){
     throw notFound("Group not found.")
