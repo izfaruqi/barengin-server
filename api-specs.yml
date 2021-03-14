@@ -12,6 +12,7 @@ tags:
   - name: group_category
   - name: balance_mutation
   - name: review
+  - name: discussion
 paths:
   /provider:
     get:
@@ -484,6 +485,95 @@ paths:
         '401':
           $ref: "#/components/responses/MalformedJWTError"
          
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /discussion/{groupId}/message:
+    get:
+      tags:
+        - discussion
+      security:
+        - bearerJWT: []
+      summary: Get messages from group discussion
+      description: Get messages from group discussion.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group category ID
+        - in: query
+          name: since
+          schema:
+            type: string
+            format: date-time
+          description: Get messages since this time.
+        - in: query
+          name: until
+          schema:
+            type: string
+            format: date-time
+          description: Get messages until this time.
+      responses:
+        '200': 
+          description: Returns a list of discussion messages.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscussionMessage"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+    post:
+      tags:
+        - discussion
+      security:
+        - bearerJWT: []
+      summary: Send message to group discussion
+      description: Send message to group discussion.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Group category ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+      responses:
+        '200': 
+          description: Returns the id of the message.
+          content:
+            application/json:
+              schema: 
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: number
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          $ref: "#/components/responses/NotEnoughPrivilegeError"
         default:
           $ref: "#/components/responses/UnexpectedError"
   /user/:
@@ -1105,8 +1195,24 @@ components:
         publishedAt:
           type: string
           format: date-time
+    DiscussionMessage:
+      type: object
+      required:
+        - id
+        - content
+        - senderId
+        - sentAt
+      properties:
+        id:
+          type: number
+        content:
+          type: string
+        senderId:
+          type: number
+        sentAt:
+          type: string
+          format: date-time
 
-          
   securitySchemes:
     bearerJWT:
       type: http
