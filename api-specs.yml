@@ -11,6 +11,7 @@ tags:
   - name: provider
   - name: group_category
   - name: balance_mutation
+  - name: review
 paths:
   /provider:
     get:
@@ -360,6 +361,131 @@ paths:
         default:
           $ref: "#/components/responses/UnexpectedError"
   
+  /review:
+    get:
+      tags:
+        - review
+      security:
+        - bearerJWT: []
+      summary: Get all reviews for the user
+      description: Get all reviews for the user.
+      responses:
+        '200': 
+          description: Returns the list of all reviews for the user.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - group
+                    - rating
+                    - content
+                    - anonymous
+                    - publishedAt
+                  properties:
+                    id:
+                      type: number
+                    rating:
+                      type: number
+                      min: 1
+                      max: 5
+                    content:
+                      type: string
+                    anonymous:
+                      type: boolean
+                    owner:
+                      type: object
+                      properties: 
+                        id:
+                          type: number
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+                    group:
+                      type: object
+                    publishedAt:
+                      type: string
+                      format: date-time
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /review/{id}:
+    post:
+      tags:
+          - review
+      security:
+        - bearerJWT: []
+      summary: Edit review by id.
+      description: Edit review by id. After the review is published, only content and anonymous status can be changed.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Review ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: number
+                  min: 1
+                  max: 5
+                content:
+                  type: string
+                anonymous:
+                  type: boolean
+      responses:
+        '200': 
+          description: Returns the edited fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rating:
+                    type: number
+                    min: 1
+                    max: 5
+                  content:
+                    type: string
+                  anonymous:
+                    type: boolean   
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /review/seller:
+    get:
+      tags:
+          - review
+      summary: Get all published reviews for the seller
+      description: Get all published reviews for the seller.
+      responses:
+        '200': 
+          description: Returns the list of all published reviews for the seller.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+         
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   /user/:
     get:
       tags:
@@ -938,6 +1064,45 @@ components:
           type: string
           enum: [settled, held]
         createdAt:
+          type: string
+          format: date-time
+    Review:
+      type: object
+      required:
+        - id
+        - owner
+        - transactionItem
+        - group
+        - rating
+        - content
+        - anonymous
+        - publishedAt
+      properties:
+        id:
+          type: number
+        rating:
+          type: number
+          min: 1
+          max: 5
+        owner:
+          type: object
+          properties: 
+            id:
+              type: number
+            firstName:
+              type: string
+            lastName:
+              type: string
+        transactionItem:
+          type: object
+        group:
+          type: object
+        mutation:
+          type: number
+        mutationStatus:
+          type: string
+          enum: [settled, held]
+        publishedAt:
           type: string
           format: date-time
 
