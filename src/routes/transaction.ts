@@ -32,7 +32,7 @@ const routes: Spec[] = [
     handler: [jwt, isAdmin, getById]
   },
   {
-    method: "GET",
+    method: "POST",
     path: "/:id/cancel",
     validate: cancelByIdValidator.validate,
     handler: [jwt, cancelById]
