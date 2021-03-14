@@ -19,8 +19,7 @@ export const insert: Config = {
       name: group.name.required(),
       categoryId: group.categoryId.required(),
       slotsAvailable: group.slotsAvailable.required(),
-      rules: group.rules,
-      credentials: group.credentials
+      rules: group.rules
     },
     output: {
       '400-599': {
