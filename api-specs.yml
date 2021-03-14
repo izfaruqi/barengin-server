@@ -3,7 +3,7 @@ info:
   title: Bareng.in Server API
   version: 0.1.0
 tags:
-  - name: public
+  - name: root
   - name: admin_required
   - name: seller_required
   - name: auth
@@ -14,7 +14,46 @@ tags:
   - name: review
   - name: discussion
   - name: group
+  - name: transaction
 paths:
+  /:
+    get:
+      tags: 
+        - root
+      summary: Get api version
+      responses:
+        '200': 
+          description: Returns the api version.
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  version:
+                    type: string
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /landing-stats:
+    get:
+      tags: 
+        - root
+      summary: Get landing page stats
+      responses:
+        '200': 
+          description: Returns the landing page stats.
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  users:
+                    type: number
+                  groups:
+                    type: number
+                  groupCategories:
+                    type: number
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   /provider:
     get:
       tags:
@@ -1078,6 +1117,404 @@ paths:
           $ref: "#/components/responses/MalformedJWTError"
         default:
           $ref: "#/components/responses/UnexpectedError"
+  /transaction/insert:
+    post:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Insert a new transaction.
+      description: Insert a new transaction. Set transactionType to `topup` for topping up (`items` will be ignored). Top up is only allowed via midtrans. 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentMethod
+                - transactionType
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      slotsTaken: 
+                        type: number
+                      id:
+                        type: number
+                      relationToOwner:
+                        type: string
+                transactionType:
+                  type: string
+                  enum: [sale, topup]
+                paymentMethod:
+                  type: string
+                  enum: [midtrans, balance]
+                topupAmount:
+                  type: number
+      responses:
+        '200': 
+          description: Returns the transaction id and midtrans redirect url (if midtrans is used).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  midtransOrderId:
+                    type: string
+                  midtransRedirect:
+                    type: string
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '402':
+          description: Insufficient balance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          description: User already has a pending transaction or is already a member of one of the groups.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction:
+    get:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Get all transactions for user
+      description: Get all transactions for user.
+      responses:
+        '200': 
+          description: Returns all the list of all transactions for the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: number
+                    transactionType:
+                      type: string
+                      enum: [sale, topup]
+                    paymentMethod:
+                      type: string
+                      enum: [midtrans, balance]
+                    totalPrice:
+                      type: number
+                    paymentStatus:
+                      type: string
+                      enum: [settled, pending, expired, cancelled]
+                    midtransRedirect:
+                      type: string
+                    midtransOrderId:
+                      type: string
+                    paidAt:
+                      type: string
+                      format: date-time
+                    createdAt:
+                      type: string
+                      format: date-time
+                    expiresAt:
+                      type: string
+                      format: date-time
+                    items:
+                      $ref: "#/components/schemas/TransactionItem"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/withdraw-balance:
+    post:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Withdraw balance from current user
+      description: Withdraw balance from current user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:  
+                  type: number
+                  min: 0
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '402':
+          description: Insufficient balance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/sale:
+    get:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Get all sales for user
+      description: Get all sales for user.
+      responses:
+        '200': 
+          description: Returns all the list of all sales (TransactionItem) for the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TransactionItem"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/sale/{id}/imburse:
+    post:
+      tags:
+        - admin_required
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Imburses a sale to the seller
+      description: Imburses a sale to the seller. Imbursed sales cannot be refunded.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Transaction ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          description: Transaction already imbursed/refunded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/sale/{id}/refund:
+    post:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Refunds a sale to the buyer
+      description: Refunds a sale to the buyer. Refunded sales cannot be imbursed.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Transaction ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          description: Transaction already refunded/imbursed/past refund cutoff date.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/{id}:
+    get:
+      tags:
+        - admin_required
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Get transaction by id
+      description: Get transaction by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Transaction ID
+      responses:
+        '200': 
+          description: Returns all the list of all transactions for the user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/{id}/cancel:
+    post:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Cancel transaction by id
+      description: Cancel transaction by id.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Transaction ID
+      responses:
+        '200': 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          description: Transaction already cancelled/settled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/{id}/midtrans-manual-update-status:
+    post:
+      tags:
+        - transaction
+      security:
+        - bearerJWT: []
+      summary: Trigger manual midtrans recheck
+      description: Trigger manual recheck of transaction to midtrans.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+          required: true
+          description: Transaction ID
+      responses:
+        '200': 
+          description: Returns current payment status from midtrans.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [settled, pending]
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        '403':
+          description: Transaction not eligible for rechecking.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  /transaction/midtrans-notification:
+    post:
+      tags:
+        - transaction
+      summary: Endpoint for automatic midtrans payment notifications
+      description: Endpoint for automatic midtrans payment notifications. Should not be manually triggerd.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200': 
+          description: Returns current payment status from midtrans.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [settled, pending]
+        '400':
+          $ref: "#/components/responses/BadRequestError"
+        '403':
+          description: Signature key mismatch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
   /user/:
     get:
       tags:
@@ -1772,7 +2209,68 @@ components:
              type: string
            lastName:
              type: string
-
+       joinedAt:
+         type: string
+         format: date-time
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: number
+        transactionType:
+          type: string
+          enum: [sale, topup]
+        paymentMethod:
+          type: string
+          enum: [midtrans, balance]
+        totalPrice:
+          type: number
+        paymentStatus:
+          type: string
+          enum: [settled, pending, expired, cancelled]
+        midtransRedirect:
+          type: string
+        midtransOrderId:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        items:
+          $ref: "#/components/schemas/TransactionItem"
+        buyer:
+          type: object
+          properties:
+            id:
+              type: number
+            firstName:
+              type: number
+            lastName:
+              type: number
+    TransactionItem:
+      type: object
+      properties:
+        id:
+          type: number
+        price:
+          type: number
+        name:
+          type: string
+        categoryName:
+          type: string
+        relationToOwner:
+          type: string
+        refundCutoffAt:
+          type: string
+          format: date-time
+        refundedAt:
+          type: string
+          format: date-time
   securitySchemes:
     bearerJWT:
       type: http
