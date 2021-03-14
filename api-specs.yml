@@ -3,12 +3,14 @@ info:
   title: Bareng.in Server API
   version: 0.1.0
 tags:
-  - name: auth
-  - name: user
+  - name: public
   - name: admin_required
   - name: seller_required
+  - name: auth
+  - name: user
   - name: provider
   - name: group_category
+  - name: balance_mutation
 paths:
   /provider:
     get:
@@ -144,6 +146,8 @@ paths:
       get:
         tags:
           - group_category
+        security:
+          - bearerJWT: []
         summary: Get all group categories
         description: Get the list of all group categories.
         responses:
@@ -155,6 +159,10 @@ paths:
                   type: array
                   items:
                     $ref: "#/components/schemas/GroupCategory"
+          '400':
+            $ref: "#/components/responses/BadRequestError"
+          '401':
+            $ref: "#/components/responses/MalformedJWTError"
           default:
             $ref: "#/components/responses/UnexpectedError"
       post:
@@ -208,11 +216,12 @@ paths:
             $ref: "#/components/responses/NotEnoughPrivilegeError"
           default:
             $ref: "#/components/responses/UnexpectedError"
-            
   /group-category/{id}:
       get:
         tags:
           - group_category
+        security:
+          - bearerJWT: []
         summary: Get group category by id
         description: Get group category by id.
         parameters:
@@ -229,6 +238,10 @@ paths:
               application/json:
                 schema: 
                   $ref: "#/components/schemas/GroupCategory"
+          '400':
+            $ref: "#/components/responses/BadRequestError"
+          '401':
+            $ref: "#/components/responses/MalformedJWTError"
           default:
             $ref: "#/components/responses/UnexpectedError"
       post:
@@ -327,6 +340,26 @@ paths:
           default:
             $ref: "#/components/responses/UnexpectedError"
   
+  /balance-mutation:
+    get:
+      tags:
+        - balance_mutation
+      summary: Get all balance mutations for the user
+      description: Get the list of all all balance mutations for the user.
+      responses:
+        '200': 
+          description: Returns the list of all balance mutations for the user.
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: "#/components/schemas/BalanceMutation"
+        '401':
+          $ref: "#/components/responses/MalformedJWTError"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+  
   /user/:
     get:
       tags:
@@ -372,7 +405,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         default:
           $ref: "#/components/responses/UnexpectedError"
-        
   /user/all:
     get:
       tags:
@@ -390,8 +422,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
-                  
+                  $ref: "#/components/schemas/User"  
   /user/{id}:
     get:
       tags:
@@ -531,7 +562,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         default:
           $ref: "#/components/responses/UnexpectedError"
-          
   /user/login:
     post:
       tags:
@@ -582,7 +612,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         default:
           $ref: "#/components/responses/UnexpectedError"
-          
   /user/register:
     post:
       tags:
@@ -641,8 +670,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         default:
-          $ref: "#/components/responses/UnexpectedError"
-        
+          $ref: "#/components/responses/UnexpectedError"     
   /user/tokenswap:
     post:
       tags:
@@ -841,6 +869,26 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/User"
+    UserEdit:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+        isAdmin:
+          type: boolean
+          default: false
+        isSeller:
+          type: boolean
+          default: false
+        address:
+          type: string
+        birthDate:
+          type: number
+        phone:
+          type: number
     Provider:
       type: object
       required:
@@ -874,26 +922,25 @@ components:
           min: 0
         description:
           type: string
-    UserEdit:
+    BalanceMutation:
       type: object
+      required:
+        - id
+        - mutation
+        - mutationStatus
+        - createdAt
       properties:
-        firstName:
-          type: string
-          minLength: 1
-        lastName:
-          type: string
-        isAdmin:
-          type: boolean
-          default: false
-        isSeller:
-          type: boolean
-          default: false
-        address:
-          type: string
-        birthDate:
+        id:
           type: number
-        phone:
+        mutation:
           type: number
+        mutationStatus:
+          type: string
+          enum: [settled, held]
+        createdAt:
+          type: string
+          format: date-time
+
           
   securitySchemes:
     bearerJWT:
